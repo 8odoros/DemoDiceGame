@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Gem Game</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>Dice Gem Game</h1>
+        
+        <div class="players-container">
+            <div id="player1" class="player-card active">
+                <h2 class="player-name">Player 1</h2>
+                <div class="gems-container">
+                    <div class="gem-group">
+                        <div class="gem red-gem"><span id="player1-red-gems">0</span></div>
+                        <div class="gem blue-gem"><span id="player1-blue-gems">0</span></div>
+                    </div>
+                    <div class="gem-group">
+                        <div class="gem green-gem"><span id="player1-green-gems">0</span></div>
+                        <div class="gem purple-gem"><span id="player1-purple-gems">0</span></div>
+                    </div>
+                </div>
+                <div class="sixes-count">Sixes: <span id="player1-sixes">0</span></div>
+            </div>
+            
+            <div id="player2" class="player-card">
+                <h2 class="player-name">Player 2</h2>
+                <div class="gems-container">
+                    <div class="gem-group">
+                        <div class="gem red-gem"><span id="player2-red-gems">0</span></div>
+                        <div class="gem blue-gem"><span id="player2-blue-gems">0</span></div>
+                    </div>
+                    <div class="gem-group">
+                        <div class="gem green-gem"><span id="player2-green-gems">0</span></div>
+                        <div class="gem purple-gem"><span id="player2-purple-gems">0</span></div>
+                    </div>
+                </div>
+                <div class="sixes-count">Sixes: <span id="player2-sixes">0</span></div>
+            </div>
+        </div>
+        
+        <div class="game-status">
+            <h2 id="current-player">Player 1's Turn</h2>
+            <p id="roll-count">Roll 1 of 3</p>
+        </div>
+        
+        <div class="dice-container">
+            <!-- Dice will be added dynamically by JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <button id="roll-btn">Roll Dice</button>
+            <button id="end-turn-btn" disabled>End Turn</button>
+            <button id="start-game-btn">Start Game</button>
+        </div>
+        
+        <div class="instructions">
+            <p>Click on dice to select them for re-rolling. You get up to 3 rolls per turn.</p>
+        </div>
+    </div>
+    
+    <script src="js/utils.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
