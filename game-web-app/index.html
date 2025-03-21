@@ -1,3 +1,4 @@
+.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +11,10 @@
 <body>
     <div class="game-container">
         <h1>Dice Gem Game</h1>
+        
+        <div class="game-info">
+            <div class="turn-counter">Turn: <span id="turn-counter">0</span></div>
+        </div>
         
         <div class="players-container">
             <div id="player1" class="player-card active">
@@ -56,6 +61,13 @@
             <button id="roll-btn">Roll Dice</button>
             <button id="end-turn-btn" disabled>End Turn</button>
             <button id="start-game-btn">Start Game</button>
+        </div>
+        
+        <div class="game-history-container">
+            <h3>Game History</h3>
+            <div id="game-history" class="game-history">
+                <!-- Game events will be added here dynamically -->
+            </div>
         </div>
         
         <div class="instructions">

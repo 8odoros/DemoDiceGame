@@ -127,3 +127,8 @@ button:disabled {
     padding: 10px;
     border-radius: 5px;
 }
+
+/* Add this to your existing styles.css */
+#roll-btn {
+    display: none; /* Hidden initially */
+}
