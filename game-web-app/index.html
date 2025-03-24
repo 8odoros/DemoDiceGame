@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dice Gem Game</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/game.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
-        <h1>Dice Gem Game</h1>
+        <h1>Dice Gem Game II</h1>
         
         <div class="game-info">
             <div class="round-counter">Round: <span id="round-counter">1</span></div> <!-- Start from round 1 -->
@@ -49,11 +48,11 @@
         </div>
         
         <div class="game-status">
-            <h2 id="current-player">Alice's Turn</h2>
-            <p id="roll-count">Roll 1 of 4</p> <!-- Update the roll count display -->
+            <h2 id="current-player">Welcome to Dice Gem Game</h2>
+            <p id="roll-count" class="hidden"></p> <!-- Hide initially and remove text -->
         </div>
         
-        <div class="dice-container">
+        <div class="dice-container hidden">
             <!-- Dice will be added dynamically by JavaScript -->
         </div>
         
@@ -75,8 +74,6 @@
         </div>
     </div>
     
-    <script src="js/utils.js"></script>
-    <script src="js/game.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

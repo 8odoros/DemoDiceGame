@@ -1,305 +1,153 @@
-/* General Styles */
-* {
+/* ============================
+   GENERAL STYLES - DEVELOPER THEME
+   ============================ */
+   * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Press Start 2P', cursive; /* Retro font */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Developer fonts */
 }
 
 body {
-    background-color: #1a1a1a;
-    background-image: linear-gradient(45deg, #ff6b6b, #ffcc33, #70a1ff, #a29bfe);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background-color: #1e1e1e; /* VS Code dark theme background */
+    color: #d4d4d4; /* Light gray text common in IDEs */
+    padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: center;
     min-height: 100vh;
-    padding: 20px;
-}
-
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 h1, h2, h3 {
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-}
-
-.container {
-    width: 80%;
-    margin: auto;
-    overflow: hidden;
-}
-
-.header {
-    background: linear-gradient(135deg, #ff6b6b, #ffcc33);
-    color: #ffffff;
-    padding: 20px 0;
-    text-align: center;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.footer {
-    background: linear-gradient(135deg, #70a1ff, #a29bfe);
-    color: #ffffff;
-    text-align: center;
-    padding: 10px 0;
-    position: relative;
-    bottom: 0;
-    width: 100%;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.button {
-    display: inline-block;
-    font-size: 18px;
-    color: #ffffff;
-    background: linear-gradient(135deg, #ff6b6b, #ffcc33);
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.button:hover {
-    background: linear-gradient(135deg, #ffcc33, #ff6b6b);
-}
-
-.game-area {
-    position: relative;
-    width: 100%;
-    height: 600px;
-    background: #1a1a1a;
-    border: 2px solid #ffcc33;
-    overflow: hidden;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.character {
-    width: 50px;
-    height: 50px;
-    position: absolute;
-}
-
-.score {
-    font-size: 24px;
-    color: #ffcc33;
-    margin: 20px 0;
-}
-
-.game-container {
-    background-color: #1a1a1a;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    padding: 30px;
-    width: 100%;
-    max-width: 800px;
-    text-align: center;
+    color: #61afef; /* Light blue for headings - like function names */
+    margin-bottom: 10px;
 }
 
 h1 {
-    color: #ffcc33;
-    margin-bottom: 24px;
-    font-size: 32px;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
-}
-
-button {
-    background-color: #ff6b6b;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-button:hover {
-    background-color: #ffcc33;
-    transform: translateY(-2px);
-}
-
-button:disabled {
-    background-color: #b2b2b2;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.instructions {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #ffcc33;
-    background-color: #333;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-/* Add this to your existing styles.css */
-#roll-btn {
-    display: none; /* Hidden initially */
-}
-/* Dice styles */
-.dice {
-    display: inline-block;
-    width: 50px;
-    height: 50px;
-    line-height: 50px;
+    color: #c586c0; /* Purple like keywords */
     text-align: center;
     font-size: 24px;
-    font-weight: bold;
-    margin: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.dice:hover {
-    transform: scale(1.1);
-}
-
-.dice.selected {
-    border: 2px solid #ffcc33;
-}
-
-/* Distinct colors for each dice value */
-.dice[data-value="1"] {
-    background-color: #ff9999; /* Light Red */
-    color: #000;
-}
-
-.dice[data-value="2"] {
-    background-color: #99ccff; /* Light Blue */
-    color: #000;
-}
-
-.dice[data-value="3"] {
-    background-color: #99ff99; /* Light Green */
-    color: #000;
-}
-
-.dice[data-value="4"] {
-    background-color: #ffcc99; /* Light Orange */
-    color: #000;
-}
-
-.dice[data-value="5"] {
-    background-color: #cc99ff; /* Light Purple */
-    color: #000;
-}
-
-.dice[data-value="6"] {
-    background-color: #ffeb3b; /* Bright Yellow */
-    color: #000;
+    margin-bottom: 20px;
 }
 
 .hidden {
     display: none;
 }
 
-/* Add this to your existing styles.css */
-#roll-btn {
-    display: none; /* Hidden initially */
+/* ============================
+   CONTAINERS AND LAYOUTS
+   ============================ */
+.container {
+    width: 90%;
+    margin: auto;
+    overflow: hidden;
 }
 
-/* Button styles */
-#roll-btn {
-    background-color: #ff6b6b; /* Red */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+.header {
+    background-color: #252526; /* Darker panel */
+    color: #d4d4d4;
+    padding: 15px;
+    border-bottom: 1px solid #3e3e42; /* Subtle border */
+    margin-bottom: 20px;
+    border-radius: 4px;
 }
 
-#roll-btn:hover {
-    background-color: #ffcc33; /* Yellow */
-    transform: translateY(-2px);
-}
-
-#end-turn-btn {
-    background-color: #70a1ff; /* Blue */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-#end-turn-btn:hover {
-    background-color: #1e3799; /* Dark Blue */
-    transform: translateY(-2px);
-}
-
-#start-game-btn {
-    background-color: #a29bfe; /* Purple */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-#start-game-btn:hover {
-    background-color: #6c5ce7; /* Dark Purple */
-    transform: translateY(-2px);
-}
-
-/* Game history panel */
-.game-history-container {
-    max-height: 150px; /* Adjust height to fit the last 5 rows */
-    overflow-y: auto;
-    background-color: #333;
-    color: #ffcc33;
+.footer {
+    background-color: #252526;
+    border-top: 1px solid #3e3e42;
     padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
 }
 
-.game-history {
-    display: flex;
-    flex-direction: column-reverse; /* Display history in descending order */
+/* Game container - like VS Code layout */
+.game-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #252526; /* VS Code sidebar */
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.game-area {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================
+   PLAYER CARDS & GEMS
+   ============================ */
+.players-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.player-card {
+    flex: 1;
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    padding: 15px;
+    transition: all 0.3s;
+}
+
+.player-card.active {
+    border: 1px solid #569cd6; /* Blue highlight */
+    background-color: #2d2d30;
+    box-shadow: 0 0 10px rgba(86, 156, 214, 0.3);
+}
+
+.player-name {
+    color: #9cdcfe; /* Variable blue */
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 2px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.player-name:hover {
+    background-color: #2d2d30;
+}
+
+.gems-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 10px 0;
+}
+
+.gem-group {
+    display: flex;
+    gap: 10px;
+    margin: 5px;
+}
+
 /* Gem styles */
 .gem {
     position: relative;
     width: 40px;
     height: 40px;
     margin: 10px;
-    display: inline-block;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     background: inherit;
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3), 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
 }
 
 .gem span {
-    display: inline-block;
+    position: relative;
+    z-index: 2;
     font-size: 16px;
     font-weight: bold;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    color: #ffffff;
 }
 
 .gem:hover {
@@ -308,30 +156,408 @@ button:disabled {
 
 /* Red Gem - Octahedron Cut */
 .red-gem {
+    color: #f14c4c;
     background: linear-gradient(135deg, #ff6b6b, #c23616);
     clip-path: polygon(50% 100%, 100% 40%, 75% 0%, 25% 0%, 0% 40%);
+    background-color: #331111;
 }
 
 /* Blue Gem - Triangular Cut */
 .blue-gem {
+    color: #569cd6;
     background: linear-gradient(135deg, #70a1ff, #1e3799);
     clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    background-color: #111a2a;
 }
 
 /* Green Gem - Dodecahedron Cut */
 .green-gem {
+    color: #6a9955;
     background: linear-gradient(135deg, #7bed9f, #2ed573);
     clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    background-color: #132017;
 }
 
 /* Purple Gem - Triangular Cut Variation 3 */
 .purple-gem {
+    color: #c586c0;
     background: linear-gradient(135deg, #a29bfe, #6c5ce7);
     clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+    background-color: #251425;
 }
-
 
 @keyframes shine {
     0% { left: -50%; }
     100% { left: 150%; }
+}
+
+.sixes-count {
+    color: #4ec9b0; /* Teal like class name */
+    margin-top: 10px;
+    font-family: 'Consolas', monospace;
+    text-align: center;
+}
+
+/* ============================
+   DICE STYLES
+   ============================ */
+.dice-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    min-height: 100px;
+    transition: all 0.4s ease-in-out;
+}
+
+/* Dice alignment styles */
+.dice-container.align-left {
+    justify-content: flex-start;
+    padding-left: 20px;
+}
+
+.dice-container.align-right {
+    justify-content: flex-end;
+    padding-right: 20px;
+}
+
+/* Optional: Add a subtle indicator for dice direction */
+.dice-container.align-left::before {
+    content: "◀";
+    position: absolute;
+    left: 5px;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.dice-container.align-right::before {
+    content: "▶";
+    position: absolute;
+    right: 5px;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dice styles to look like code tokens */
+.dice {
+    width: 60px;
+    height: 60px;
+    margin: 8px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #2d2d30;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.dice:hover {
+    background-color: #3e3e42;
+}
+
+.dice.selected {
+    border: 2px solid #569cd6; /* Blue like keywords */
+    background-color: #264f78; /* VS Code selection blue */
+    box-shadow: 0 0 8px rgba(86, 156, 214, 0.7);
+    transform: scale(1.05);
+}
+
+/* Colors for dice values like syntax highlighting */
+.dice[data-value="1"] {
+    color: #ce9178; /* String orange-red */
+}
+
+.dice[data-value="2"] {
+    color: #b5cea8; /* Number green */
+}
+
+.dice[data-value="3"] {
+    color: #9cdcfe; /* Variable blue */
+}
+
+.dice[data-value="4"] {
+    color: #c586c0; /* Keyword purple */
+}
+
+.dice[data-value="5"] {
+    color: #dcdcaa; /* Function yellow */
+}
+
+.dice[data-value="6"] {
+    color: #4ec9b0; /* Class teal */
+}
+
+@keyframes roll {
+    0% { transform: rotateX(0deg) rotateY(0deg); }
+    100% { transform: rotateX(720deg) rotateY(720deg); }
+}
+
+/* ============================
+   CONTROLS & BUTTONS
+   ============================ */
+.controls {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+button {
+    background-color: #2d2d30; /* VS Code button */
+    color: #cccccc;
+    border: 1px solid #3e3e42;
+    padding: 8px 14px;
+    margin: 5px;
+    font-size: 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background-color: #3e3e42;
+    color: #ffffff;
+}
+
+button:disabled {
+    background-color: #2d2d2d;
+    color: #6d6d6d;
+    cursor: not-allowed;
+}
+
+/* Button highlight for selection */
+button.highlight {
+    background-color: #264f78; /* VS Code selection highlight */
+}
+
+/* Button styles for IDE theme */
+#roll-btn {
+    background-color: #569cd6; /* Function blue */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+#roll-btn:hover {
+    background-color: #4b85bc;
+}
+
+#roll-btn.active-btn {
+    /* Ensure visibility with !important */
+    display: inline-block !important;
+}
+
+#end-turn-btn {
+    background-color: #6a9955; /* Comment green */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+#end-turn-btn:hover {
+    background-color: #588048;
+}
+
+#start-game-btn {
+    background-color: #c586c0; /* Keyword purple */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+#start-game-btn:hover {
+    background-color: #a571a1;
+}
+
+/* Disabled button styling */
+button.disabled {
+    opacity: 0.6;
+    background-color: #2d2d2d !important;
+    color: #6d6d6d !important;
+    cursor: not-allowed !important;
+    border: 1px solid #3e3e42 !important;
+}
+
+/* ============================
+   GAME STATUS & INFO
+   ============================ */
+.game-status {
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    padding: 10px 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.game-info {
+    background-color: #2d2d30;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-size: 14px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 4px solid #569cd6; /* Blue like selection */
+}
+
+.turn-counter {
+    color: #d4d4d4;
+}
+
+/* Max rolls message styling */
+#roll-count.max-rolls-reached {
+    color: #f14c4c; /* Red error color */
+    font-weight: bold;
+    padding: 8px;
+    border-left: 4px solid #f14c4c;
+    background-color: rgba(241, 76, 76, 0.1);
+    margin: 10px 0;
+}
+
+/* Toast notification */
+#game-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #264f78; /* VS Code notification blue */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    max-width: 80%;
+    text-align: center;
+    border-left: 4px solid #569cd6;
+}
+
+#game-notification.show {
+    opacity: 1;
+}
+
+/* ============================
+   GAME HISTORY
+   ============================ */
+.game-history-container {
+    background-color: #1e1e1e; /* Dark terminal bg */
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 15px 0;
+    max-height: 250px;
+}
+
+.game-history-container h3 {
+    color: #ffffff;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #3e3e42;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.game-history {
+    height: 180px;
+    overflow-y: auto;
+    padding: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column-reverse; /* Display history in descending order */
+}
+
+.history-entry {
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    line-height: 1.4;
+}
+
+.history-entry:last-child {
+    border-bottom: none;
+}
+
+/* History entry types with syntax coloring */
+.history-player1 {
+    color: #9cdcfe; /* Light blue for player 1 */
+}
+
+.history-player2 {
+    color: #ce9178; /* Orange-red for player 2 */
+}
+
+.history-system {
+    color: #6a9955; /* Green for system messages like comments */
+    font-style: italic;
+}
+
+/* Fancy scrollbar for terminal effect */
+.game-history::-webkit-scrollbar {
+    width: 10px;
+    background-color: #1e1e1e;
+}
+
+.game-history::-webkit-scrollbar-track {
+    background-color: #1e1e1e;
+    border-radius: 4px;
+}
+
+.game-history::-webkit-scrollbar-thumb {
+    background-color: #3e3e42;
+    border-radius: 4px;
+}
+
+.game-history::-webkit-scrollbar-thumb:hover {
+    background-color: #555555;
+}
+
+/* Animation for new history entries */
+@keyframes fadeHighlight {
+    from { background-color: rgba(86, 156, 214, 0.2); }
+    to { background-color: transparent; }
+}
+
+.history-new {
+    animation: fadeHighlight 1.5s ease-out;
+}
+
+/* ============================
+   MISCELLANEOUS
+   ============================ */
+.instructions {
+    background-color: #333333; /* Slightly lighter than main bg */
+    border-left: 4px solid #608b4e; /* Green comment color */
+    color: #608b4e; /* Comment green */
+    padding: 10px;
+    margin: 15px 0;
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Animations */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
