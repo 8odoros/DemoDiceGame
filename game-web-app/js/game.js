@@ -4,16 +4,16 @@ let lastTime;
 // Game state
 let gameState = {
     players: [
-        { name: "Player 1", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
-        { name: "Player 2", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
+        { name: "Alice", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
+        { name: "Bob", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
     ],
     currentPlayerIndex: 0,
     diceValues: [],
     selectedDice: [],
     rollCount: 0,
-    maxRolls: 3,
+    maxRolls: 4,
     numDice: 8,
-    turnCount: 0 // Add turn counter
+    roundCount: 0 // Change turn counter to round counter
 };
 
 function init() {
@@ -232,42 +232,24 @@ function endRound() {
     
     // Compare sixes and award gems to the winner
     if (players[0].sixes > players[1].sixes) {
-        players[0].gems.red += 1;
-        players[0].gems.blue += 1;
+        players[0].gems.green += 1;
     } else if (players[1].sixes > players[0].sixes) {
-        players[1].gems.red += 1;
-        players[1].gems.blue += 1;
+        players[1].gems.green += 1;
     }
     
     // Reset sixes counts
     players[0].sixes = 0;
     players[1].sixes = 0;
-}
 
-function switchPlayer() {
-    // If both players have played, end the round
-    if (gameState.currentPlayerIndex === 1) {
-        endRound();
-        // Increment turn count after both players have played
-        gameState.turnCount++;
-        logGameEvent('system', `Turn ${gameState.turnCount} completed.`);
-    }
-    
-    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-}
-
-function resetTurn() {
-    gameState.diceValues = [];
-    gameState.selectedDice = [];
-    gameState.rollCount = 0;
-    document.getElementById('roll-btn').textContent = "Roll Dice";
-    document.getElementById('roll-btn').disabled = false;
-    document.getElementById('end-turn-btn').disabled = true;
+    // Increment round count after both players have played
+    gameState.roundCount++;
+    logGameEvent('system', `Round ${gameState.roundCount} completed.`);
+    updateUI();
 }
 
 function updateUI() {
-    // Update turn counter
-    document.getElementById('turn-counter').textContent = gameState.turnCount;
+    // Update round counter
+    document.getElementById('round-counter').textContent = gameState.roundCount;
     
     // Update player cards
     document.querySelectorAll('.player-card').forEach((card, index) => {
@@ -316,12 +298,34 @@ function updateUI() {
     });
 }
 
+function switchPlayer() {
+    // If both players have played, end the round
+    if (gameState.currentPlayerIndex === 1) {
+        endRound();
+        // Increment round count after both players have played
+        gameState.roundCount++;
+        logGameEvent('system', `Round ${gameState.roundCount} completed.`);
+    }
+    
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+}
+
+function resetTurn() {
+    gameState.diceValues = [];
+    gameState.selectedDice = [];
+    gameState.rollCount = 0;
+    document.getElementById('roll-btn').textContent = "Roll Dice";
+    document.getElementById('roll-btn').disabled = false;
+    document.getElementById('end-turn-btn').disabled = true;
+}
+
+
 function startGame() {
     // Reset game state
     gameState = {
         players: [
-            { name: "Player 1", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
-            { name: "Player 2", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
+            { name: "Alice", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
+            { name: "Bob", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
         ],
         currentPlayerIndex: 0,
         diceValues: [],
@@ -329,7 +333,7 @@ function startGame() {
         rollCount: 0,
         maxRolls: 3,
         numDice: 8,
-        turnCount: 0 // Reset turn count
+        roundCount: 0 // Reset round count
     };
     
     // Clear history
@@ -360,10 +364,7 @@ function logGameEvent(source, message) {
     }
     
     entry.textContent = `${prefix}${message}`;
-    historyEl.appendChild(entry);
-    
-    // Scroll to bottom to show the latest entry
-    historyEl.scrollTop = historyEl.scrollHeight;
+    historyEl.prepend(entry); // Add new entries at the top
     
     // Remove the highlight class after animation completes
     setTimeout(() => {

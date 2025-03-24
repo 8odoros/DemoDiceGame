@@ -1,24 +1,24 @@
-.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dice Gem Game</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
         <h1>Dice Gem Game</h1>
         
         <div class="game-info">
-            <div class="turn-counter">Turn: <span id="turn-counter">0</span></div>
+            <div class="round-counter">Round: <span id="round-counter">1</span></div> <!-- Start from round 1 -->
         </div>
         
         <div class="players-container">
             <div id="player1" class="player-card active">
-                <h2 class="player-name">Player 1</h2>
+                <h2 class="player-name">Alice's treasure</h2>
                 <div class="gems-container">
                     <div class="gem-group">
                         <div class="gem red-gem"><span id="player1-red-gems">0</span></div>
@@ -33,7 +33,7 @@
             </div>
             
             <div id="player2" class="player-card">
-                <h2 class="player-name">Player 2</h2>
+                <h2 class="player-name">Bob's treasure</h2>
                 <div class="gems-container">
                     <div class="gem-group">
                         <div class="gem red-gem"><span id="player2-red-gems">0</span></div>
@@ -49,8 +49,8 @@
         </div>
         
         <div class="game-status">
-            <h2 id="current-player">Player 1's Turn</h2>
-            <p id="roll-count">Roll 1 of 3</p>
+            <h2 id="current-player">Alice's Turn</h2>
+            <p id="roll-count">Roll 1 of 4</p> <!-- Update the roll count display -->
         </div>
         
         <div class="dice-container">
@@ -59,7 +59,7 @@
         
         <div class="controls">
             <button id="roll-btn">Roll Dice</button>
-            <button id="end-turn-btn" disabled>End Turn</button>
+            <button id="end-turn-btn" class="hidden">End Turn</button> <!-- Initially hidden -->
             <button id="start-game-btn">Start Game</button>
         </div>
         
@@ -71,7 +71,7 @@
         </div>
         
         <div class="instructions">
-            <p>Click on dice to select them for re-rolling. You get up to 3 rolls per turn.</p>
+            <p>Click on dice to select them for re-rolling. You get up to 4 rolls per turn.</p> <!-- Update the instructions -->
         </div>
     </div>
     
