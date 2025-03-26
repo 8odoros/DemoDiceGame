@@ -18,6 +18,16 @@
         <div class="players-container">
             <div id="player1" class="player-card active">
                 <h2 class="player-name">Alice's treasure</h2>
+                <div class="player-stats">
+                    <div class="stat-circle gold-circle">
+                        <span class="stat-value" id="player1-vp">0</span>
+                        <span class="stat-label">VP</span>
+                    </div>
+                    <div class="stat-circle silver-circle">
+                        <span class="stat-value" id="player1-sixes">0</span>
+                        <span class="stat-icon">⚅</span>
+                    </div>
+                </div>
                 <div class="gems-container">
                     <div class="gem-group">
                         <div class="gem red-gem"><span id="player1-red-gems">0</span></div>
@@ -29,10 +39,21 @@
                     </div>
                 </div>
                 <div class="sixes-count">Sixes: <span id="player1-sixes">0</span></div>
+                <div class="victory-points">Victory Points: <span id="player1-vp">0</span></div>
             </div>
             
             <div id="player2" class="player-card">
                 <h2 class="player-name">Bob's treasure</h2>
+                <div class="player-stats">
+                    <div class="stat-circle gold-circle">
+                        <span class="stat-value" id="player2-vp">0</span>
+                        <span class="stat-label">VP</span>
+                    </div>
+                    <div class="stat-circle silver-circle">
+                        <span class="stat-value" id="player2-sixes">0</span>
+                        <span class="stat-icon">⚅</span>
+                    </div>
+                </div>
                 <div class="gems-container">
                     <div class="gem-group">
                         <div class="gem red-gem"><span id="player2-red-gems">0</span></div>
@@ -44,9 +65,17 @@
                     </div>
                 </div>
                 <div class="sixes-count">Sixes: <span id="player2-sixes">0</span></div>
+                <div class="victory-points">Victory Points: <span id="player2-vp">0</span></div>
             </div>
         </div>
         
+        <div class="cards-container">
+            <h3 class="card-section-title">Cards Market</h3>
+            <div class="card-display">
+                <!-- Cards will be added here dynamically -->
+            </div>
+        </div>
+
         <div class="game-status">
             <h2 id="current-player">Welcome to Dice Gem Game</h2>
             <p id="roll-count" class="hidden"></p> <!-- Hide initially and remove text -->

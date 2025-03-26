@@ -12,7 +12,13 @@ let gameState = {
     rollCount: 0,
     maxRolls: 4, // FIXED: Now consistent with main.js
     numDice: 8,
-    roundCount: 1 // Start from round 1
+    roundCount: 1, // Start from round 1
+    cards: {
+        deck: [],
+        displayed: [],
+        discarded: []
+    },
+    victoryPoints: [0, 0] // Track victory points for each player
 };
 
 let gameRunning = false;
@@ -134,24 +140,12 @@ function rollDice() {
     
     // First roll - create dice if they don't exist yet
     if (gameState.rollCount === 0) {
-        // Set the dice alignment based on current player
-        if (gameState.currentPlayerIndex === 0) {
-            // Alice's turn - align dice to the left
-            diceContainer.classList.remove('align-right');
-            diceContainer.classList.add('align-left');
-        } else {
-            // Bob's turn - align dice to the right
-            diceContainer.classList.remove('align-left');
-            diceContainer.classList.add('align-right');
-        }
-        
         document.getElementById('end-turn-btn').disabled = false;
         
         // Create dice on first roll
         diceContainer.innerHTML = ''; // Clear any existing dice
         
-        
-        // Create the dice - FIX THE SYNTAX ERROR HERE
+        // Create the dice
         for (let i = 0; i < gameState.numDice; i++) {
             const dice = document.createElement('div');
             dice.classList.add('dice');
@@ -184,6 +178,7 @@ function rollDice() {
         logGameEvent('player', `${getCurrentPlayer().name} rolled dice: ${gameState.diceValues.join(', ')}.`);
     } else {
         // For subsequent rolls, get existing dice
+        
         const diceElements = diceContainer.querySelectorAll('.dice');
         
         // Roll only selected dice
@@ -306,16 +301,64 @@ function calculateScore() {
     gameState.diceValues.forEach(value => counts[value]++);
     
     // 1s: Each 1 rewards player with 1 red gem
-    currentPlayer.gems.red += counts[1];
+    const redGems = counts[1];
+    currentPlayer.gems.red += redGems;
     
     // 2s: Each pair of 2s rewards player with 1 blue gem
-    currentPlayer.gems.blue += Math.floor(counts[2] / 2);
+    const blueGems = Math.floor(counts[2] / 2);
+    currentPlayer.gems.blue += blueGems;
     
-    // 3s and 4s: Calculate green gems
-    // (Implementation depends on your game rules)
+    // 3s: Each triplet of 3s rewards player with 1 green gem
+    const greenGems = Math.floor(counts[3] / 3);
+    currentPlayer.gems.green += greenGems;
     
-    // Log the score
-    logGameEvent('player', `${currentPlayer.name} earned ${counts[1]} red gems and ${Math.floor(counts[2] / 2)} blue gems.`);
+    // 4s: If there's at least one 4, player gets a purple gem
+    const purpleGems = counts[4] > 0 ? 1 : 0;
+    currentPlayer.gems.purple += purpleGems;
+    
+    // 5s: Progressive rewards based on count
+    let fivesRedGems = 0;
+    let fivesBlueGems = 0;
+    let fivesGreenGems = 0;
+    let fivesPurpleGems = 0;
+    
+    // Award gems based on how many 5s were rolled
+    if (counts[5] >= 4) {
+        fivesPurpleGems = 1;
+        currentPlayer.gems.purple += 1;
+    } else if (counts[5] === 3) {
+        fivesGreenGems = 1;
+        currentPlayer.gems.green += 1;
+    } else if (counts[5] === 2) {
+        fivesBlueGems = 1;
+        currentPlayer.gems.blue += 1;
+    } else if (counts[5] === 1) {
+        fivesRedGems = 1;
+        currentPlayer.gems.red += 1;
+    }
+    
+    // Update total gem counts for logging
+    const totalRedGems = redGems + fivesRedGems;
+    const totalBlueGems = blueGems + fivesBlueGems;
+    const totalGreenGems = greenGems + fivesGreenGems;
+    const totalPurpleGems = purpleGems + fivesPurpleGems;
+    
+    // Log the score with comprehensive details
+    let scoreMessage = `${currentPlayer.name} earned: `;
+    if (totalRedGems > 0) scoreMessage += `${totalRedGems} red gem${totalRedGems > 1 ? 's' : ''}, `;
+    if (totalBlueGems > 0) scoreMessage += `${totalBlueGems} blue gem${totalBlueGems > 1 ? 's' : ''}, `;
+    if (totalGreenGems > 0) scoreMessage += `${totalGreenGems} green gem${totalGreenGems > 1 ? 's' : ''}, `;
+    if (totalPurpleGems > 0) scoreMessage += `${totalPurpleGems} purple gem${totalPurpleGems > 1 ? 's' : ''}, `;
+    
+    // Remove trailing comma and space
+    scoreMessage = scoreMessage.replace(/, $/, '');
+    
+    // If no gems were earned
+    if (scoreMessage === `${currentPlayer.name} earned: `) {
+        scoreMessage = `${currentPlayer.name} didn't earn any gems this turn.`;
+    }
+    
+    logGameEvent('player', scoreMessage);
 }
 
 function endTurn() {
@@ -341,6 +384,19 @@ function endTurn() {
     
     // Switch to next player
     switchPlayer();
+    
+    // Set dice alignment for the NEXT player (after switchPlayer has been called)
+    const diceContainer = document.querySelector('.dice-container');
+    if (gameState.currentPlayerIndex === 0) {
+        // Alice is next player - align dice to the left
+        diceContainer.classList.remove('align-right');
+        diceContainer.classList.add('align-left');
+    } else {
+        // Bob is next player - align dice to the right
+        diceContainer.classList.remove('align-left');
+        diceContainer.classList.add('align-right');
+    }
+    
     updateUI();
 }
 
@@ -368,6 +424,10 @@ function endRound() {
     updateUI();
 }
 
+// Keep track of previous values for animation
+let prevVictoryPoints = [0, 0];
+let prevSixes = [0, 0];
+
 function updateUI() {
     // Update round counter
     document.getElementById('round-counter').textContent = gameState.roundCount;
@@ -385,8 +445,9 @@ function updateUI() {
     // Update current player indicator
     updateActivePlayer();
     
-    // Update sixes counter for current player
-    document.getElementById('sixes-count').textContent = `Sixes: ${getCurrentPlayer().sixes}`;
+    // Update sixes counter for BOTH players (not just current)
+    document.getElementById('player1-sixes').textContent = gameState.players[0].sixes;
+    document.getElementById('player2-sixes').textContent = gameState.players[1].sixes;
 
     // Update dice selection visualization
     updateDiceSelection();
@@ -394,6 +455,42 @@ function updateUI() {
     // Ensure roll button visibility
     updateRollButtonVisibility();
     updateRollButtonText();
+
+    // Check if the game has ended
+    checkGameEnd();
+    
+    // Update victory points display
+    document.getElementById('player1-vp').textContent = gameState.victoryPoints[0];
+    document.getElementById('player2-vp').textContent = gameState.victoryPoints[1];
+    
+    // Update card display to reflect current player's available gems
+    updateCardsDisplay();
+
+    // Update victory points with animation if changed
+    for (let i = 0; i < 2; i++) {
+        const vpElement = document.getElementById(`player${i+1}-vp`);
+        if (vpElement) {
+            if (gameState.victoryPoints[i] !== prevVictoryPoints[i]) {
+                vpElement.classList.add('pulse');
+                setTimeout(() => vpElement.classList.remove('pulse'), 500);
+                prevVictoryPoints[i] = gameState.victoryPoints[i];
+            }
+            vpElement.textContent = gameState.victoryPoints[i];
+        }
+    }
+    
+    // Update sixes counter with animation if changed
+    for (let i = 0; i < 2; i++) {
+        const sixesElement = document.getElementById(`player${i+1}-sixes`);
+        if (sixesElement) {
+            if (gameState.players[i].sixes !== prevSixes[i]) {
+                sixesElement.classList.add('pulse');
+                setTimeout(() => sixesElement.classList.remove('pulse'), 500);
+                prevSixes[i] = gameState.players[i].sixes;
+            }
+            sixesElement.textContent = gameState.players[i].sixes;
+        }
+    }
 }
 
 function updatePlayerGems() {
@@ -461,6 +558,7 @@ function resetTurn() {
     updateUI();
 }
 
+// Initialize the card system in startGame()
 function startGame() {
     // Reset game state
     gameState = {
@@ -474,7 +572,13 @@ function startGame() {
         rollCount: 0,
         maxRolls: 4,
         numDice: 8,
-        roundCount: 1
+        roundCount: 1,
+        cards: {
+            deck: [],
+            displayed: [],
+            discarded: []
+        },
+        victoryPoints: [0, 0] // Track victory points for each player
     };
     
     // Set game as running
@@ -502,6 +606,20 @@ function startGame() {
     
     // Initialize game
     init();
+    
+    // Set initial dice alignment for Alice (player 0)
+    const diceContainer = document.querySelector('.dice-container');
+    diceContainer.classList.remove('align-right');
+    diceContainer.classList.add('align-left');
+    
+    // Add card system initialization
+    gameState.cards.deck = generateDeck();
+    gameState.cards.displayed = [];
+    gameState.cards.discarded = [];
+    gameState.victoryPoints = [0, 0];
+    
+    // Draw initial 5 cards
+    drawCards(5);
 }
 
 function createDice() {
@@ -623,6 +741,264 @@ function updateRollButtonText() {
     } else {
         rollBtn.textContent = "Roll Selected Dice";
     }
+}
+
+// Add this to updateUI or as a separate function called from updateUI
+function checkGameEnd() {
+    const maxPoints = 10; // Adjust based on desired game length
+    
+    if (gameState.victoryPoints[0] >= maxPoints || gameState.victoryPoints[1] >= maxPoints) {
+        // Determine winner
+        let winner;
+        if (gameState.victoryPoints[0] > gameState.victoryPoints[1]) {
+            winner = gameState.players[0].name;
+        } else if (gameState.victoryPoints[1] > gameState.victoryPoints[0]) {
+            winner = gameState.players[1].name;
+        } else {
+            winner = "It's a tie!";
+        }
+        
+        // Log game end
+        logGameEvent('system', `Game over! ${winner} wins with ${Math.max(gameState.victoryPoints[0], gameState.victoryPoints[1])} victory points!`);
+        
+        // Disable game controls
+        gameRunning = false;
+        document.getElementById('roll-btn').disabled = true;
+        document.getElementById('end-turn-btn').disabled = true;
+        
+        // Show game end notification
+        showNotification(`Game over! ${winner} wins!`, 6000);
+    }
+}
+
+// Add this array of fantasy object names
+const fantasyObjectNames = [
+    // Weapons
+    "Dragon's Bane", "Shadowblade", "Lightbringer", "Storm Caller", "Whispering Bow",
+    "Frostbite Dagger", "Soulreaver", "Void Scepter", "Thunder Hammer", "Celestial Staff",
+    
+    // Artifacts
+    "Orb of Destiny", "Ancient Codex", "Philosopher's Stone", "Celestial Compass", "Eternity Hourglass",
+    "Astral Prism", "Void Mirror", "Dreamcatcher Locket", "Crystal of Insight", "Rune of Power",
+    
+    // Talismans
+    "Phoenix Feather", "Dragon Scale", "Unicorn Horn", "Mermaid's Tear", "Fairy Dust Vial",
+    "Wizard's Amulet", "Elven Brooch", "Dwarven Ring", "Griffin Talon", "Siren's Pearl",
+    
+    // Relics
+    "Crown of Ages", "Chalice of Life", "Tome of Secrets", "Mask of Truth", "Gauntlet of Giants",
+    "Heart of Mountain", "Eye of Oracle", "Shield of Heroes", "Boots of Speed", "Cloak of Shadows",
+    
+    // Scrolls & Potions
+    "Elixir of Wisdom", "Scroll of Time", "Potion of Courage", "Enchanted Ink", "Remedy of Restoration",
+    "Essence of Elements", "Brew of Strength", "Arcane Formula", "Mist of Dreams", "Flask of Flames"
+];
+
+// Generate the card deck
+function generateDeck() {
+    const deck = [];
+    const gemTypes = ['red', 'blue', 'green', 'purple'];
+    
+    // Create a copy of the names array that we can modify
+    const availableNames = [...fantasyObjectNames];
+    
+    // Create 52 unique cards with different costs and point values
+    for (let i = 0; i < 52; i++) {
+        // Determine gem requirements (2-5 gems)
+        const gemCount = Math.floor(Math.random() * 4) + 2; // 2-5 gems
+        const cost = {};
+        
+        // Initialize all gem types to 0
+        gemTypes.forEach(type => cost[type] = 0);
+        
+        // Distribute gem requirements
+        for (let j = 0; j < gemCount; j++) {
+            const gemType = gemTypes[Math.floor(Math.random() * gemTypes.length)];
+            cost[gemType]++;
+        }
+        
+        // Determine victory points (1-5 points, higher costs = more points)
+        const points = Math.floor(gemCount / 2) + Math.floor(Math.random() * 3) + 1;
+        
+        // Generate a random card name or use fallback if we run out
+        let cardName;
+        if (availableNames.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableNames.length);
+            cardName = availableNames.splice(randomIndex, 1)[0]; // Remove the used name
+        } else {
+            cardName = `Mysterious Artifact #${i}`; // Fallback name
+        }
+        
+        // Create card
+        const card = {
+            id: i,
+            name: cardName,
+            cost: cost,
+            points: points,
+            // Add visual variety with different "card types"
+            type: ['treasure', 'artifact', 'spell', 'relic'][Math.floor(Math.random() * 4)]
+        };
+        
+        deck.push(card);
+    }
+    
+    // Shuffle the deck
+    return shuffleDeck(deck);
+}
+
+// Shuffle deck function
+function shuffleDeck(deck) {
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+}
+
+// Draw cards from deck
+function drawCards(count) {
+    // Draw specified number of cards or as many as possible
+    const cardsToDisplay = Math.min(count, gameState.cards.deck.length);
+    
+    for (let i = 0; i < cardsToDisplay; i++) {
+        // Move card from deck to displayed
+        if (gameState.cards.deck.length > 0) {
+            gameState.cards.displayed.push(gameState.cards.deck.pop());
+        }
+    }
+    
+    // Update the displayed cards UI
+    updateCardsDisplay();
+}
+
+// Updated function to display multiple gem icons instead of counts
+function renderCardCost(cost) {
+    let html = '';
+    
+    // Create a gem container
+    html += '<div class="gem-requirements-container">';
+    
+    // For each gem type
+    for (const [gemType, count] of Object.entries(cost)) {
+        // Only process if there are gems of this type required
+        if (count > 0) {
+            // Add a container for this gem type
+            html += `<div class="gem-type-group gem-type-${gemType}">`;
+            
+            // Repeat the gem icon for the count
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="gem-requirement">
+                        <div class="gem-requirement-icon gem-requirement-${gemType}"></div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>'; // Close the gem type group
+        }
+    }
+    
+    html += '</div>'; // Close the container
+    return html;
+}
+
+// Update cards display in UI
+function updateCardsDisplay() {
+    const cardDisplay = document.querySelector('.card-display');
+    if (!cardDisplay) {
+        console.error("Card display container not found!");
+        return;
+    }
+    
+    cardDisplay.innerHTML = '';
+    
+    console.log("Displaying cards:", gameState.cards.displayed.length);
+    
+    gameState.cards.displayed.forEach((card, index) => {
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('card', `card-${card.type}`);
+        cardElement.dataset.index = index;
+        
+        // Check if current player can afford this card
+        const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
+        if (!canAfford) {
+            cardElement.classList.add('unavailable');
+        }
+        
+        // Card content with fantasy name
+        cardElement.innerHTML = `
+            <div class="card-header">
+                <div class="card-points">${card.points}</div>
+                <h4 class="card-name">${card.name}</h4>
+            </div>
+            <div class="card-cost">
+                ${renderCardCost(card.cost)}
+            </div>
+            <div class="card-type">${card.type}</div>
+        `;
+        
+        // Add click handler for card purchase
+        cardElement.addEventListener('click', () => {
+            if (canAfford) {
+                purchaseCard(index);
+            } else {
+                showNotification("You don't have enough gems to purchase this card!");
+            }
+        });
+        
+        cardDisplay.appendChild(cardElement);
+    });
+}
+
+// Check if player can afford a card
+function canPlayerAffordCard(playerIndex, card) {
+    const player = gameState.players[playerIndex];
+    
+    for (const [gemType, count] of Object.entries(card.cost)) {
+        if (player.gems[gemType] < count) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// Purchase a card
+function purchaseCard(cardIndex) {
+    const card = gameState.cards.displayed[cardIndex];
+    const player = gameState.players[gameState.currentPlayerIndex];
+    
+    // Check if player can afford card
+    if (!canPlayerAffordCard(gameState.currentPlayerIndex, card)) {
+        showNotification("You don't have enough gems to purchase this card!");
+        return;
+    }
+    
+    // Deduct gems
+    for (const [gemType, count] of Object.entries(card.cost)) {
+        player.gems[gemType] -= count;
+    }
+    
+    // Add victory points
+    if (!gameState.victoryPoints) {
+        gameState.victoryPoints = [0, 0];
+    }
+    gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
+    
+    // Log purchase
+    logGameEvent('player', `${player.name} purchased ${card.name} for ${card.points} victory points!`);
+    
+    // Move card to discarded pile
+    gameState.cards.discarded.push(card);
+    gameState.cards.displayed.splice(cardIndex, 1);
+    
+    // Draw a new card
+    if (gameState.cards.deck.length > 0) {
+        drawCards(1);
+    }
+    
+    // Update UI
+    updateUI();
 }
 
 // Expose functions to the global scope for HTML interaction
