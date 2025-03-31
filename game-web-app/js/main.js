@@ -374,6 +374,7 @@ function endTurn() {
     // Update UI elements - enable roll button for next player
     document.getElementById('roll-btn').disabled = false;
     document.getElementById('roll-btn').style.display = 'inline-block';
+    document.getElementById('roll-btn').classList.remove('disabled');
     updateRollButtonText(); // Reset button text for next player
     
     // Disable end turn button until next roll
@@ -396,6 +397,9 @@ function endTurn() {
         diceContainer.classList.remove('align-left');
         diceContainer.classList.add('align-right');
     }
+    
+    // Add question mark dice for the new player's turn
+    createQuestionDice();
     
     updateUI();
 }
@@ -491,6 +495,7 @@ function updateUI() {
             sixesElement.textContent = gameState.players[i].sixes;
         }
     }
+    updatePurchasedCardsDisplay();
 }
 
 function updatePlayerGems() {
@@ -563,8 +568,18 @@ function startGame() {
     // Reset game state
     gameState = {
         players: [
-            { name: "Alice", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
-            { name: "Bob", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
+            { 
+                name: "Alice", 
+                gems: { red: 0, blue: 0, green: 0, purple: 0 }, 
+                sixes: 0,
+                purchasedCards: [] // Initialize purchased cards array
+            },
+            { 
+                name: "Bob", 
+                gems: { red: 0, blue: 0, green: 0, purple: 0 }, 
+                sixes: 0,
+                purchasedCards: [] // Initialize purchased cards array
+            }
         ],
         currentPlayerIndex: 0,
         diceValues: [],
@@ -578,7 +593,7 @@ function startGame() {
             displayed: [],
             discarded: []
         },
-        victoryPoints: [0, 0] // Track victory points for each player
+        victoryPoints: [0, 0]
     };
     
     // Set game as running
@@ -611,6 +626,9 @@ function startGame() {
     const diceContainer = document.querySelector('.dice-container');
     diceContainer.classList.remove('align-right');
     diceContainer.classList.add('align-left');
+    
+    // Add question mark dice at the start of the game
+    createQuestionDice();
     
     // Add card system initialization
     gameState.cards.deck = generateDeck();
@@ -753,8 +771,6 @@ function checkGameEnd() {
         if (gameState.victoryPoints[0] > gameState.victoryPoints[1]) {
             winner = gameState.players[0].name;
         } else if (gameState.victoryPoints[1] > gameState.victoryPoints[0]) {
-            winner = gameState.players[1].name;
-        } else {
             winner = "It's a tie!";
         }
         
@@ -974,6 +990,11 @@ function purchaseCard(cardIndex) {
         return;
     }
     
+    // Initialize purchased cards array if it doesn't exist
+    if (!player.purchasedCards) {
+        player.purchasedCards = [];
+    }
+    
     // Deduct gems
     for (const [gemType, count] of Object.entries(card.cost)) {
         player.gems[gemType] -= count;
@@ -985,8 +1006,11 @@ function purchaseCard(cardIndex) {
     }
     gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
     
+    // Add to player's purchased cards collection
+    player.purchasedCards.push({...card}); // Store a copy of the card
+    
     // Log purchase
-    logGameEvent('player', `${player.name} purchased ${card.name} for ${card.points} victory points!`);
+    logGameEvent('player', `${player.name} purchased ${card.name || 'a card'} for ${card.points} victory points!`);
     
     // Move card to discarded pile
     gameState.cards.discarded.push(card);
@@ -1008,3 +1032,86 @@ window.rollDice = rollDice;
 window.endTurn = endTurn;
 window.toggleDiceSelection = toggleDiceSelection;
 window.logGameEvent = logGameEvent;
+
+function updatePurchasedCardsDisplay() {
+    // For each player
+    for (let i = 0; i < 2; i++) {
+        const player = gameState.players[i];
+        const container = document.getElementById(`player${i+1}-purchased-cards`);
+        
+        if (!container) {
+            console.error(`Container for player ${i+1} cards not found`);
+            continue;
+        }
+        
+        // Clear the container
+        container.innerHTML = '';
+        
+        // Add thumbnails for each purchased card
+        if (player.purchasedCards && player.purchasedCards.length > 0) {
+            player.purchasedCards.forEach((card, idx) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.classList.add('card-thumbnail', `card-${card.type}`);
+                
+                // Points badge inside the thumbnail
+                const pointsBadge = document.createElement('div');
+                pointsBadge.classList.add('points-badge');
+                pointsBadge.textContent = card.points;
+                thumbnail.appendChild(pointsBadge);
+                
+                // Create preview container as a separate element
+                const previewContainer = document.createElement('div');
+                previewContainer.classList.add('card-preview-container');
+                
+                // Create the full card preview
+                const preview = document.createElement('div');
+                preview.classList.add('card-preview', `card-${card.type}`);
+                
+                // Card content
+                preview.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-points">${card.points}</div>
+                        <h4 class="card-name">${card.name || 'Mystery Card'}</h4>
+                    </div>
+                    <div class="card-cost">
+                        ${renderCardCost(card.cost)}
+                    </div>
+                    <div class="card-type">${card.type}</div>
+                `;
+                
+                // Add preview to container, container to thumbnail
+                previewContainer.appendChild(preview);
+                thumbnail.appendChild(previewContainer);
+                
+                // Add finished thumbnail to player's cards container
+                container.appendChild(thumbnail);
+            });
+        } else {
+            // If no cards, show message
+            const emptyMessage = document.createElement('div');
+            emptyMessage.classList.add('empty-cards-message');
+            emptyMessage.textContent = 'No cards yet';
+            container.appendChild(emptyMessage);
+        }
+    }
+}
+
+// Add this new function
+function createQuestionDice() {
+    const diceContainer = document.querySelector('.dice-container');
+    diceContainer.innerHTML = ''; // Clear existing dice
+    
+    // Create placeholder dice with question marks
+    for (let i = 0; i < gameState.numDice; i++) {
+        const dice = document.createElement('div');
+        dice.classList.add('dice', 'unrolled');
+        dice.dataset.index = i;
+        dice.textContent = '?';
+        
+        // Dice aren't clickable until rolled
+        diceContainer.appendChild(dice);
+    }
+    
+    // Clear the dice values in the game state
+    gameState.diceValues = [];
+}

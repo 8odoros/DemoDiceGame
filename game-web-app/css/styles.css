@@ -299,6 +299,20 @@ h1 {
     100% { transform: rotateX(720deg) rotateY(720deg); }
 }
 
+/* Add to your styles.css */
+.dice.unrolled {
+    background-color: #2d2d30;
+    color: #787878;
+    border: 1px solid #3e3e42;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.dice.unrolled:hover {
+    cursor: default;
+    transform: none;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
 /* ============================
    CONTROLS & BUTTONS
    ============================ */
@@ -847,4 +861,98 @@ button.disabled {
 
 .pulse {
   animation: pulse 0.5s ease-in-out;
+}
+
+/* Add to your styles.css */
+.purchased-cards-container {
+    margin-top: 15px;
+    border-top: 1px solid #3e3e42;
+    padding-top: 10px;
+    position: relative;  /* Important for positioning hover previews */
+}
+
+.purchased-cards-title {
+    font-size: 14px;
+    color: #608b4e; /* Comment green */
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.purchased-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    min-height: 55px;
+    position: relative;  /* Important for z-index context */
+}
+
+.card-thumbnail {
+    width: 40px;
+    height: 55px;
+    background-color: #252526;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+/* Fix hover preview positioning and display */
+.card-thumbnail:hover {
+    transform: translateY(-3px);
+    z-index: 100;  /* Ensure hovered card is above others */
+}
+
+.points-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background-color: #264f78;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 8px;
+    color: white;
+    font-weight: bold;
+}
+
+/* Full size card preview on hover - CRITICAL FIX */
+.card-preview-container {
+    position: absolute;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    top: -180px;  /* Position above the thumbnail */
+    left: 50%;    /* Center horizontally */
+    transform: translateX(-50%);  /* Center adjustment */
+    pointer-events: none;  /* Prevents flickering when moving cursor */
+}
+
+.card-thumbnail:hover .card-preview-container {
+    opacity: 1;
+    visibility: visible;
+}
+
+.card-preview {
+    width: 160px;
+    height: 220px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    background-color: #252526;
+    border: 2px solid #569cd6;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.empty-cards-message {
+    font-style: italic;
+    color: #999;
+    font-size: 12px;
+    padding: 10px;
 }
