@@ -1053,6 +1053,13 @@ button.disabled {
 .bonus-card {
     background: linear-gradient(to bottom, #252526, #1e1e3a);
     border-color: #569cd6;
+    cursor: pointer; /* Make it clear they're clickable */
+    transition: all 0.2s ease;
+}
+
+.bonus-card:hover:not(.unavailable) {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(86, 156, 214, 0.4);
 }
 
 .card-description {
@@ -1099,4 +1106,10 @@ button.disabled {
 .bonus-card-thumbnail {
     background-color: #1e1e3a;
     border-color: #569cd6;
+}
+
+.unavailable {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #3e3e42;
 }

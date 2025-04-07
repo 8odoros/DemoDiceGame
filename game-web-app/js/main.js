@@ -767,63 +767,99 @@ function startGame() {
     updateUI();
 }
 
-// Define bonus card types
+// Define bonus card types with proper effect implementations
 const bonusCardTypes = [
     {
         id: "ones_bonus",
         name: "1s Enhancer",
         description: "If you roll more than 2 ones, get a blue gem",
         cost: { red: 2, blue: 0, green: 0, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts) {
+            return diceCounts[1] > 2 ? { blue: 1 } : null;
+        }
     },
     {
         id: "no_low_numbers",
         name: "High Roller",
         description: "If no 1s and no 2s are rolled, get a green gem",
         cost: { red: 1, blue: 1, green: 0, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts) {
+            return (diceCounts[1] === 0 && diceCounts[2] === 0) ? { green: 1 } : null;
+        }
     },
     {
         id: "all_numbers",
         name: "Collector",
         description: "Get a purple gem if all numbers 1-6 are rolled",
         cost: { red: 1, blue: 1, green: 1, purple: 0 },
-        points: 2
+        points: 2,
+        effect: function(diceCounts) {
+            return (diceCounts[1] > 0 && diceCounts[2] > 0 && counts[3] > 0 && 
+                   counts[4] > 0 && counts[5] > 0 && counts[6] > 0) ? 
+                   { purple: 1 } : null;
+        }
     },
     {
         id: "most_sixes_bonus",
         name: "Sixes Reward",
         description: "If you have the most 6s, also get a red gem",
         cost: { red: 0, blue: 0, green: 1, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts, player, opponent) {
+            return (player.sixes > opponent.sixes) ? { red: 1 } : null;
+        }
     },
     {
         id: "double_fives",
         name: "Five's Friend",
         description: "If you roll exactly two 5s, get a blue gem",
         cost: { red: 1, blue: 0, green: 1, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts) {
+            return diceCounts[5] === 2 ? { blue: 1 } : null;
+        }
     },
     {
         id: "threes_bonus",
         name: "Thirds Time",
         description: "If you roll 2 or 4 threes, get a red gem",
         cost: { red: 0, blue: 2, green: 0, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts) {
+            return (diceCounts[3] === 2 || diceCounts[3] === 4) ? { red: 1 } : null;
+        }
     },
     {
         id: "run_of_three",
-        name: "Mini Straight",
+        name: "Mini Straight", 
         description: "If you roll 3 consecutive numbers, get a green gem",
         cost: { red: 2, blue: 0, green: 0, purple: 0 },
-        points: 1
+        points: 1,
+        effect: function(diceCounts) {
+            for (let i = 1; i <= 4; i++) {
+                if (diceCounts[i] > 0 && diceCounts[i+1] > 0 && diceCounts[i+2] > 0) {
+                    return { green: 1 };
+                }
+            }
+            return null;
+        }
     },
     {
         id: "four_of_kind",
         name: "Four Finder",
         description: "If you roll 4 of any number, get a purple gem",
         cost: { red: 0, blue: 1, green: 1, purple: 0 },
-        points: 2
+        points: 2,
+        effect: function(diceCounts) {
+            for (let i = 1; i <= 6; i++) {
+                if (diceCounts[i] >= 4) {
+                    return { purple: 1 };
+                }
+            }
+            return null;
+        }
     }
 ];
 
@@ -904,27 +940,34 @@ function updateBonusCardsDisplay() {
         
         // Add click handler for card purchase
         cardElement.addEventListener('click', () => {
-            if (canAfford) {
                 purchaseBonusCard(index);
-            } else {
-                showNotification("You don't have enough gems to purchase this card!");
-            }
         });
         
         bonusCardDisplay.appendChild(cardElement);
     });
 }
 
-// Purchase bonus card
+// Enhanced purchaseBonusCard function with debugging
 function purchaseBonusCard(index) {
+    console.log(`Attempting to purchase bonus card at index ${index}`);
+    
     const card = gameState.bonusCards.displayed[index];
+    console.log("Card to purchase:", card);
+    
     const player = gameState.players[gameState.currentPlayerIndex];
+    console.log("Player attempting to purchase:", player);
     
     // Check if player can afford card
-    if (!canPlayerAffordCard(gameState.currentPlayerIndex, card)) {
+    const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
+    console.log(`Player can afford card: ${canAfford}`);
+    
+    if (!canAfford) {
+        console.log("Player doesn't have enough gems");
         showNotification("You don't have enough gems to purchase this card!");
         return;
     }
+    
+    console.log("Proceeding with purchase...");
     
     // Initialize bonusCards array if needed
     if (!player.bonusCards) {
@@ -934,13 +977,16 @@ function purchaseBonusCard(index) {
     // Deduct gems
     for (const [gemType, count] of Object.entries(card.cost)) {
         player.gems[gemType] -= count;
+        console.log(`Deducted ${count} ${gemType} gems. Player now has ${player.gems[gemType]}`);
     }
     
     // Add victory points
     gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
+    console.log(`Added ${card.points} victory points. Player now has ${gameState.victoryPoints[gameState.currentPlayerIndex]}`);
     
     // Add to player's bonus cards collection
     player.bonusCards.push({...card});
+    console.log(`Added card to player's bonus cards. Player now has ${player.bonusCards.length} bonus cards`);
     
     // Log purchase
     logGameEvent('player', `${player.name} purchased ${card.name} (${card.description})`);
@@ -951,6 +997,7 @@ function purchaseBonusCard(index) {
     
     // Draw a new card
     if (gameState.bonusCards.deck.length > 0) {
+        console.log(`Drawing a new bonus card from deck (${gameState.bonusCards.deck.length} cards remaining)`);
         drawBonusCards(1);
     }
     
@@ -1236,73 +1283,20 @@ function renderCardCost(cost) {
     return html;
 }
 
-// Create a unified purchase handler function
-function handleCardPurchase(cardType, cardIndex) {
-    // Get correct card collection based on type
-    const cardCollection = cardType === 'bonus' ? gameState.bonusCards : gameState.cards;
-    const card = cardCollection.displayed[cardIndex];
-    const player = gameState.players[gameState.currentPlayerIndex];
-    
-    // Check if player can afford card
-    if (!canPlayerAffordCard(gameState.currentPlayerIndex, card)) {
-        showNotification("You don't have enough gems to purchase this card!");
-        return;
-    }
-    
-    // Initialize player card collections if needed
-    if (!player.purchasedCards) player.purchasedCards = [];
-    if (!player.bonusCards) player.bonusCards = [];
-    
-    // Deduct gems
-    for (const [gemType, count] of Object.entries(card.cost)) {
-        player.gems[gemType] -= count;
-    }
-    
-    // Add victory points
-    gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
-    
-    // Add to appropriate player's card collection
-    if (cardType === 'bonus') {
-        player.bonusCards.push({...card});
-        logGameEvent('player', `${player.name} purchased ${card.name} (${card.description})`);
-    } else {
-        player.purchasedCards.push({...card});
-        logGameEvent('player', `${player.name} purchased ${card.name} for ${card.points} victory points!`);
-    }
-    
-    // Move card to discarded pile and remove from display
-    cardCollection.discarded.push(card);
-    cardCollection.displayed.splice(cardIndex, 1);
-    
-    // Draw a replacement card
-    if (cardType === 'bonus') {
-        if (gameState.bonusCards.deck.length > 0) {
-            drawBonusCards(1);
-        }
-    } else {
-        if (gameState.cards.deck.length > 0) {
-            drawCards(1);
-        }
-    }
-    
-    // Update UI
-    updateUI();
-}
-
-// Simplified card display functions
+// Update regular cards display
 function updateCardsDisplay() {
     const cardDisplay = document.querySelector('.card-display');
-    if (!cardDisplay) return;
+    if (!cardDisplay) {
+        console.error("Card display container not found!");
+        return;
+    }
     
     cardDisplay.innerHTML = '';
     
     gameState.cards.displayed.forEach((card, index) => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('card', `card-${card.type}`);
-        
-        // Store card data for purchase handler
-        cardElement.dataset.cardType = 'regular';
-        cardElement.dataset.cardIndex = index;
+        cardElement.dataset.index = index;
         
         // Check if current player can afford this card
         const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
@@ -1310,7 +1304,7 @@ function updateCardsDisplay() {
             cardElement.classList.add('unavailable');
         }
         
-        // Card content HTML...
+        // Card content
         cardElement.innerHTML = `
             <div class="card-header">
                 <div class="card-points">${card.points}</div>
@@ -1322,70 +1316,14 @@ function updateCardsDisplay() {
             <div class="card-type">${card.type}</div>
         `;
         
+        // Add click handler for card purchase
+        cardElement.addEventListener('click', () => {
+                purchaseCard(index);
+        });
+        
         cardDisplay.appendChild(cardElement);
     });
 }
-
-function updateBonusCardsDisplay() {
-    if (!gameState.bonusCards || !gameState.bonusCards.displayed) return;
-    
-    const bonusCardDisplay = document.querySelector('.bonus-card-display');
-    if (!bonusCardDisplay) return;
-    
-    bonusCardDisplay.innerHTML = '';
-    
-    gameState.bonusCards.displayed.forEach((card, index) => {
-        const cardElement = document.createElement('div');
-        cardElement.classList.add('card', 'bonus-card');
-        
-        // Store card data for purchase handler
-        cardElement.dataset.cardType = 'bonus';
-        cardElement.dataset.cardIndex = index;
-        
-        // Check if current player can afford this card
-        const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
-        if (!canAfford) {
-            cardElement.classList.add('unavailable');
-        }
-        
-        // Card content HTML...
-        cardElement.innerHTML = `
-            <div class="card-header">
-                <div class="card-points">${card.points}</div>
-                <h4 class="card-name">${card.name}</h4>
-            </div>
-            <div class="card-description">${card.description}</div>
-            <div class="card-cost">
-                ${renderCardCost(card.cost)}
-            </div>
-            <div class="card-type">Bonus</div>
-        `;
-        
-        bonusCardDisplay.appendChild(cardElement);
-    });
-}
-
-// Add this event delegation to handle all card purchases
-document.addEventListener('DOMContentLoaded', () => {
-    // Previous event listeners...
-    
-    // Add event delegation for card purchases
-    document.addEventListener('click', (event) => {
-        // Find closest card element that was clicked
-        const cardElement = event.target.closest('.card');
-        if (!cardElement) return; // Not a card click
-        
-        const cardType = cardElement.dataset.cardType;
-        const cardIndex = parseInt(cardElement.dataset.cardIndex);
-        
-        // Check if valid card data and not unavailable
-        if (cardType && !isNaN(cardIndex) && !cardElement.classList.contains('unavailable')) {
-            handleCardPurchase(cardType, cardIndex);
-        } else if (cardElement.classList.contains('unavailable')) {
-            showNotification("You don't have enough gems to purchase this card!");
-        }
-    });
-});
 
 // Check if player can afford a card
 function canPlayerAffordCard(playerIndex, card) {
@@ -1398,6 +1336,52 @@ function canPlayerAffordCard(playerIndex, card) {
     }
     
     return true;
+}
+
+// Purchase a card
+function purchaseCard(cardIndex) {
+    const card = gameState.cards.displayed[cardIndex];
+    const player = gameState.players[gameState.currentPlayerIndex];
+    
+    // Check if player can afford card
+    if (!canPlayerAffordCard(gameState.currentPlayerIndex, card)) {
+        showNotification("You don't have enough gems to purchase this card!");
+        return;
+    }
+    
+    // Initialize purchased cards array if it doesn't exist
+    if (!player.purchasedCards) {
+        player.purchasedCards = [];
+    }
+    
+    // Deduct gems
+    for (const [gemType, count] of Object.entries(card.cost)) {
+        player.gems[gemType] -= count;
+    }
+    
+    // Add victory points
+    if (!gameState.victoryPoints) {
+        gameState.victoryPoints = [0, 0];
+    }
+    gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
+    
+    // Add to player's purchased cards collection
+    player.purchasedCards.push({...card}); // Store a copy of the card
+    
+    // Log purchase
+    logGameEvent('player', `${player.name} purchased ${card.name || 'a card'} for ${card.points} victory points!`);
+    
+    // Move card to discarded pile
+    gameState.cards.discarded.push(card);
+    gameState.cards.displayed.splice(cardIndex, 1);
+    
+    // Draw a new card
+    if (gameState.cards.deck.length > 0) {
+        drawCards(1);
+    }
+    
+    // Update UI
+    updateUI();
 }
 
 // Expose functions to the global scope for HTML interaction
@@ -1560,4 +1544,3 @@ function cleanupRedundantElements() {
         element.style.display = 'none';
     });
 }
-```
