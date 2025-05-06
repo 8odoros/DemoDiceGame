@@ -1,4 +1,7 @@
-// Combined game logic from main.js and game.js
+//To run the server:
+//npm install -g http-server
+//http-server -p 8008
+//http://localhost:8008/Documents/GitHub/DemoDiceGame/game-web-app/index.html
 
 // Game state
 let gameState = {
@@ -673,8 +676,52 @@ function resetTurn() {
     updateUI();
 }
 
-// Initialize the card system in startGame()
-function startGame() {
+// Add this function to parse CSV data
+function parseCSV(csvText) {
+    const rows = csvText.trim().split('\n');
+    const headers = rows.shift().split(';');
+    return rows.map(row => {
+        const values = row.split(';');
+        const card = headers.reduce((acc, header, index) => {
+            acc[header.trim()] = isNaN(values[index]) ? values[index].trim() : parseInt(values[index], 10);
+            return acc;
+        }, {});
+        // Combine cost columns into a single object
+        card.cost = {
+            red: card.cost_red || 0,
+            blue: card.cost_blue || 0,
+            green: card.cost_green || 0,
+            purple: card.cost_purple || 0
+        };
+
+        card.type = card.type || 'regular'; // Default to 'regular' if type is not specified
+        
+        // Remove individual cost columns
+        delete card.cost_red;
+        delete card.cost_blue;
+        delete card.cost_green;
+        delete card.cost_purple;
+        return card;
+    });
+}
+
+// Add this function to load cards from a CSV file
+async function loadCardsFromCSV(filePath) {
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+            throw new Error(`Failed to load ${filePath}: ${response.statusText}`);
+        }
+        const csvText = await response.text();
+        return parseCSV(csvText);
+    } catch (error) {
+        console.error(`Error loading cards from ${filePath}:`, error);
+        return [];
+    }
+}
+
+// Update the startGame function to load cards from CSV files
+async function startGame() {
     // Reset game state
     gameState = {
         players: [
@@ -707,62 +754,63 @@ function startGame() {
         },
         victoryPoints: [0, 0]
     };
-    
+
+    // Load cards from CSV files
+    const bonus_Cards = await loadCardsFromCSV('assets/bonus_cards.csv');
+    const market_Cards = await loadCardsFromCSV('assets/market_cards.csv');
+
+    // Initialize the card decks
+    gameState.cards.deck = shuffleDeck(market_Cards);
+    gameState.bonusCards = {
+        deck: shuffleDeck(bonus_Cards),
+        displayed: [],
+        discarded: []
+    };
+
     // Set game as running
     gameRunning = true;
-    
+
     // Clear history
     const historyEl = document.getElementById('game-history');
     historyEl.innerHTML = '';
-    
+
     // Remove redundant UI elements
     cleanupRedundantElements();
-    
+
     // Show UI elements
     document.querySelector('.dice-container').classList.remove('hidden');
     document.querySelector('.dice-container').innerHTML = ''; // Ensure dice container is empty
     document.getElementById('roll-count').classList.remove('hidden');
-    
+
     // Update UI first to ensure all elements are visible
     document.getElementById('roll-btn').style.display = 'inline-block';
     document.getElementById('roll-btn').disabled = false;
     document.getElementById('roll-btn').classList.add('active-btn');
     document.getElementById('start-game-btn').textContent = 'Restart Game';
     updateRollButtonText(); // Set initial button text
-    
+
     // End turn button should be visible but disabled until first roll
     document.getElementById('end-turn-btn').style.display = 'inline-block';
     document.getElementById('end-turn-btn').disabled = true;
-    
+
     // Initialize game
     init();
-    
+
     // Set initial dice alignment for Alice (player 0)
     const diceContainer = document.querySelector('.dice-container');
     diceContainer.classList.remove('align-right');
     diceContainer.classList.add('align-left');
-    
+
     // Add question mark dice at the start of the game
     createQuestionDice();
-    
     // Add card system initialization
-    gameState.cards.deck = generateDeck();
-    gameState.cards.displayed = [];
-    gameState.cards.discarded = [];
-    
+
     // Draw initial regular cards
     drawCards(5);
-    
-    // Add bonus cards to the game state
-    gameState.bonusCards = {
-        deck: generateBonusCardsDeck(),
-        displayed: [],
-        discarded: []
-    };
-    
+
     // Draw initial bonus cards
     drawBonusCards(5);
-    
+
     // Update UI to show the cards
     updateUI();
 }
@@ -1152,81 +1200,6 @@ function checkGameEnd() {
     }
 }
 
-// Add this array of fantasy object names
-const fantasyObjectNames = [
-    // Weapons
-    "Dragon's Bane", "Shadowblade", "Lightbringer", "Storm Caller", "Whispering Bow",
-    "Frostbite Dagger", "Soulreaver", "Void Scepter", "Thunder Hammer", "Celestial Staff",
-    
-    // Artifacts
-    "Orb of Destiny", "Ancient Codex", "Philosopher's Stone", "Celestial Compass", "Eternity Hourglass",
-    "Astral Prism", "Void Mirror", "Dreamcatcher Locket", "Crystal of Insight", "Rune of Power",
-    
-    // Talismans
-    "Phoenix Feather", "Dragon Scale", "Unicorn Horn", "Mermaid's Tear", "Fairy Dust Vial",
-    "Wizard's Amulet", "Elven Brooch", "Dwarven Ring", "Griffin Talon", "Siren's Pearl",
-    
-    // Relics
-    "Crown of Ages", "Chalice of Life", "Tome of Secrets", "Mask of Truth", "Gauntlet of Giants",
-    "Heart of Mountain", "Eye of Oracle", "Shield of Heroes", "Boots of Speed", "Cloak of Shadows",
-    
-    // Scrolls & Potions
-    "Elixir of Wisdom", "Scroll of Time", "Potion of Courage", "Enchanted Ink", "Remedy of Restoration",
-    "Essence of Elements", "Brew of Strength", "Arcane Formula", "Mist of Dreams", "Flask of Flames"
-];
-
-// Generate the card deck
-function generateDeck() {
-    const deck = [];
-    const gemTypes = ['red', 'blue', 'green', 'purple'];
-    
-    // Create a copy of the names array that we can modify
-    const availableNames = [...fantasyObjectNames];
-    
-    // Create 52 unique cards with different costs and point values
-    for (let i = 0; i < 52; i++) {
-        // Determine gem requirements (2-5 gems)
-        const gemCount = Math.floor(Math.random() * 4) + 2; // 2-5 gems
-        const cost = {};
-        
-        // Initialize all gem types to 0
-        gemTypes.forEach(type => cost[type] = 0);
-        
-        // Distribute gem requirements
-        for (let j = 0; j < gemCount; j++) {
-            const gemType = gemTypes[Math.floor(Math.random() * gemTypes.length)];
-            cost[gemType]++;
-        }
-        
-        // Determine victory points (1-5 points, higher costs = more points)
-        const points = Math.floor(gemCount / 2) + Math.floor(Math.random() * 3) + 1;
-        
-        // Generate a random card name or use fallback if we run out
-        let cardName;
-        if (availableNames.length > 0) {
-            const randomIndex = Math.floor(Math.random() * availableNames.length);
-            cardName = availableNames.splice(randomIndex, 1)[0]; // Remove the used name
-        } else {
-            cardName = `Mysterious Artifact #${i}`; // Fallback name
-        }
-        
-        // Create card
-        const card = {
-            id: i,
-            name: cardName,
-            cost: cost,
-            points: points,
-            // Add visual variety with different "card types"
-            type: ['treasure', 'artifact', 'spell', 'relic'][Math.floor(Math.random() * 4)]
-        };
-        
-        deck.push(card);
-    }
-    
-    // Shuffle the deck
-    return shuffleDeck(deck);
-}
-
 // Shuffle deck function
 function shuffleDeck(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
@@ -1326,16 +1299,14 @@ function updateCardsDisplay() {
 }
 
 // Check if player can afford a card
-function canPlayerAffordCard(playerIndex, card) {
-    const player = gameState.players[playerIndex];
-    
-    for (const [gemType, count] of Object.entries(card.cost)) {
-        if (player.gems[gemType] < count) {
-            return false;
-        }
+function canPlayerAffordCard(player, card) {
+    if (!card.cost) {
+        console.error('Card cost is undefined:', card);
+        return false;
     }
-    
-    return true;
+    return Object.entries(card.cost).every(([gemType, cost]) => {
+        return gameState.players[player].gems[gemType] >= cost;
+    });
 }
 
 // Purchase a card
