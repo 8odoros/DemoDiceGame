@@ -803,7 +803,6 @@ async function startGame() {
 
     // Add question mark dice at the start of the game
     createQuestionDice();
-    // Add card system initialization
 
     // Draw initial regular cards
     drawCards(5);
@@ -1228,18 +1227,48 @@ function drawCards(count) {
 // Updated function to display multiple gem icons instead of counts
 function renderCardCost(cost) {
     let html = '';
-    
+    const gemEntries = Object.entries(cost).filter(([_, count]) => count > 0);
+
+    // Calculate total gems required
+    const totalGems = gemEntries.reduce((sum, [_, count]) => sum + count, 0);
+
     // Create a gem container
     html += '<div class="gem-requirements-container">';
-    
-    // For each gem type
-    for (const [gemType, count] of Object.entries(cost)) {
-        // Only process if there are gems of this type required
-        if (count > 0) {
-            // Add a container for this gem type
-            html += `<div class="gem-type-group gem-type-${gemType}">`;
-            
-            // Repeat the gem icon for the count
+
+    // If total gems are 3 or more, split into two rows
+    if (totalGems >= 3) {
+        let row1 = '';
+        let row2 = '';
+        let currentRow = 1;
+        let gemsInRow = 0;
+
+        gemEntries.forEach(([gemType, count]) => {
+            for (let i = 0; i < count; i++) {
+                const gemHtml = `
+                    <div class="gem-requirement">
+                        <div class="gem-requirement-icon gem-requirement-${gemType}"></div>
+                    </div>
+                `;
+
+                if (currentRow === 1) {
+                    row1 += gemHtml;
+                    gemsInRow++;
+                    if (gemsInRow >= Math.ceil(totalGems / 2)) {
+                        currentRow = 2;
+                        gemsInRow = 0;
+                    }
+                } else {
+                    row2 += gemHtml;
+                }
+            }
+        });
+
+        // Add rows to the container
+        html += `<div class="gem-row">${row1}</div>`;
+        html += `<div class="gem-row">${row2}</div>`;
+    } else {
+        // Single row for fewer than 3 gems
+        gemEntries.forEach(([gemType, count]) => {
             for (let i = 0; i < count; i++) {
                 html += `
                     <div class="gem-requirement">
@@ -1247,11 +1276,9 @@ function renderCardCost(cost) {
                     </div>
                 `;
             }
-            
-            html += '</div>'; // Close the gem type group
-        }
+        });
     }
-    
+
     html += '</div>'; // Close the container
     return html;
 }
