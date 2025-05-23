@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Don't create dice yet
     setupEventListeners();
 });
+
 // Fix setupEventListeners function
 function setupEventListeners() {
     // Start/Restart game button
@@ -100,7 +101,6 @@ function init() {
     lastTime = performance.now();
     gameRunning = true;
     updateUI();
-    requestAnimationFrame(gameLoop);
     
     // Log game start
     logGameEvent('system', 'Game started!');
@@ -109,25 +109,98 @@ function init() {
     // Now player must click the roll button explicitly
 }
 
-function gameLoop(currentTime) {
-    if (!gameRunning) return;
-
-    const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
-    lastTime = currentTime;
-
-    update(deltaTime);
+function calculateScore() {
+    const currentPlayer = getCurrentPlayer();
+    const opposingPlayer = gameState.players[1 - gameState.currentPlayerIndex];
     
-    requestAnimationFrame(gameLoop);
-}
+    // Count occurrences of each dice value
+    const counts = [0, 0, 0, 0, 0, 0, 0]; // Index 0 is unused
+    gameState.diceValues.forEach(value => counts[value]++);
+    
+    // 1s: Each 1 rewards player with 1 red gem
+    const redGems = counts[1];
+    currentPlayer.gems.red += redGems;
+    
+    // 2s: Each pair of 2s rewards player with 1 blue gem
+    const blueGems = Math.floor(counts[2] / 2);
+    currentPlayer.gems.blue += blueGems;
+    
+    // 3s: Each triplet of 3s rewards player with 1 green gem
+    const greenGems = Math.floor(counts[3] / 3);
+    currentPlayer.gems.green += greenGems;
+    
+    // 4s: If there's at least one 4, player gets a green gem
+    const fourGreenGems = counts[4] > 0 ? 1 : 0;
+    currentPlayer.gems.green += fourGreenGems;
+    
+    // 5s: Progressive rewards based on count
+    let fivesRedGems = 0;
+    let fivesBlueGems = 0;
+    let fivesGreenGems = 0;
+    let fivesPurpleGems = 0;
+    
+        // Award gems based on how many 5s were rolled
+        if (counts[5] === 4) {
+            fivesPurpleGems = 1;
+            currentPlayer.gems.purple += 1;
+        } else if (counts[5] === 3) {
+            fivesGreenGems = 1;
+            currentPlayer.gems.green += 1;
+        } else if (counts[5] === 2) {
+            fivesBlueGems = 1;
+            currentPlayer.gems.blue += 1;
+        } else if (counts[5] === 1) {
+            fivesRedGems = 1;
+            currentPlayer.gems.red += 1;
+        }
+    
+    // 6s: Player whot wins the round earns a purple gem
+    // (Already handled in endRound function)
+    
+    // Update total gem counts for logging
+    let totalRedGems = redGems + fivesRedGems;     // Changed from const to let
+    let totalBlueGems = blueGems + fivesBlueGems;
+    let totalGreenGems = greenGems + fivesGreenGems + fourGreenGems;
+    let totalPurpleGems = fivesPurpleGems;
+    
+    // Apply bonus card effects
+    const bonusGems = applyBonusCardEffects(currentPlayer, opposingPlayer, counts);
+    if (bonusGems ) {
+        logGameEvent('player', 'Gems earned from bonus ards: '+bonusGems.red+' red, '+bonusGems.blue+' blue, '+bonusGems.green+' green, '+bonusGems.purple+' purple.');
+    }
 
-function update(deltaTime) {
-    // For animation effects if needed
+    // Add bonus gems to total counts
+    for (const [gemType, count] of Object.entries(bonusGems)) {
+        if (gemType === 'red') totalRedGems += count;
+        else if (gemType === 'blue') totalBlueGems += count;
+        else if (gemType === 'green') totalGreenGems += count;
+        else if (gemType === 'purple') totalPurpleGems += count;
+        
+        // Add to player's gem count
+        currentPlayer.gems[gemType] += count;
+    }
+    
+    // Log the score with comprehensive details
+    let scoreMessage = `${currentPlayer.name} earned: `;
+    if (totalRedGems > 0) scoreMessage += `${totalRedGems} red gem${totalRedGems > 1 ? 's' : ''}, `;
+    if (totalBlueGems > 0) scoreMessage += `${totalBlueGems} blue gem${totalBlueGems > 1 ? 's' : ''}, `;
+    if (totalGreenGems > 0) scoreMessage += `${totalGreenGems} green gem${totalGreenGems > 1 ? 's' : ''}, `;
+    if (totalPurpleGems > 0) scoreMessage += `${totalPurpleGems} purple gem${totalPurpleGems > 1 ? 's' : ''}, `;
+    
+    // Remove trailing comma and space
+    scoreMessage = scoreMessage.replace(/, $/, '');
+    
+    // If no gems were earned
+    if (scoreMessage === `${currentPlayer.name} earned: `) {
+        scoreMessage = `${currentPlayer.name} didn't earn any gems this turn.`;
+    }
+    
+    logGameEvent('player', scoreMessage);
 }
 
 function getCurrentPlayer() {
     return gameState.players[gameState.currentPlayerIndex];
 }
-
 
 // the rollDice function 
 function rollDice() {
@@ -296,89 +369,6 @@ function toggleDiceSelection(index) {
     }
 }
 
-function calculateScore() {
-    const currentPlayer = getCurrentPlayer();
-    const opposingPlayer = gameState.players[1 - gameState.currentPlayerIndex];
-    
-    // Count occurrences of each dice value
-    const counts = [0, 0, 0, 0, 0, 0, 0]; // Index 0 is unused
-    gameState.diceValues.forEach(value => counts[value]++);
-    
-    // 1s: Each 1 rewards player with 1 red gem
-    const redGems = counts[1];
-    currentPlayer.gems.red += redGems;
-    
-    // 2s: Each pair of 2s rewards player with 1 blue gem
-    const blueGems = Math.floor(counts[2] / 2);
-    currentPlayer.gems.blue += blueGems;
-    
-    // 3s: Each triplet of 3s rewards player with 1 green gem
-    const greenGems = Math.floor(counts[3] / 3);
-    currentPlayer.gems.green += greenGems;
-    
-    // 4s: If there's at least one 4, player gets a green gem (CHANGED FROM PURPLE)
-    const fourGreenGems = counts[4] > 0 ? 1 : 0;
-    currentPlayer.gems.green += fourGreenGems;
-    
-    // 5s: Progressive rewards based on count
-    let fivesRedGems = 0;
-    let fivesBlueGems = 0;
-    let fivesGreenGems = 0;
-    let fivesPurpleGems = 0;
-    
-    // Award gems based on how many 5s were rolled
-    if (counts[5] >= 4) {
-        fivesPurpleGems = 1;
-        currentPlayer.gems.purple += 1;
-    } else if (counts[5] === 3) {
-        fivesGreenGems = 1;
-        currentPlayer.gems.green += 1;
-    } else if (counts[5] === 2) {
-        fivesBlueGems = 1;
-        currentPlayer.gems.blue += 1;
-    } else if (counts[5] === 1) {
-        fivesRedGems = 1;
-        currentPlayer.gems.red += 1;
-    }
-    
-    // Update total gem counts for logging
-    let totalRedGems = redGems + fivesRedGems;     // Changed from const to let
-    let totalBlueGems = blueGems + fivesBlueGems;
-    let totalGreenGems = greenGems + fivesGreenGems + fourGreenGems;
-    let totalPurpleGems = fivesPurpleGems;
-    
-    // Apply bonus card effects
-    const bonusGems = applyBonusCardEffects(currentPlayer, opposingPlayer, counts);
-    
-    // Now this will work correctly
-    for (const [gemType, count] of Object.entries(bonusGems)) {
-        if (gemType === 'red') totalRedGems += count;
-        else if (gemType === 'blue') totalBlueGems += count;
-        else if (gemType === 'green') totalGreenGems += count;
-        else if (gemType === 'purple') totalPurpleGems += count;
-        
-        // Add to player's gem count
-        currentPlayer.gems[gemType] += count;
-    }
-    
-    // Log the score with comprehensive details
-    let scoreMessage = `${currentPlayer.name} earned: `;
-    if (totalRedGems > 0) scoreMessage += `${totalRedGems} red gem${totalRedGems > 1 ? 's' : ''}, `;
-    if (totalBlueGems > 0) scoreMessage += `${totalBlueGems} blue gem${totalBlueGems > 1 ? 's' : ''}, `;
-    if (totalGreenGems > 0) scoreMessage += `${totalGreenGems} green gem${totalGreenGems > 1 ? 's' : ''}, `;
-    if (totalPurpleGems > 0) scoreMessage += `${totalPurpleGems} purple gem${totalPurpleGems > 1 ? 's' : ''}, `;
-    
-    // Remove trailing comma and space
-    scoreMessage = scoreMessage.replace(/, $/, '');
-    
-    // If no gems were earned
-    if (scoreMessage === `${currentPlayer.name} earned: `) {
-        scoreMessage = `${currentPlayer.name} didn't earn any gems this turn.`;
-    }
-    
-    logGameEvent('player', scoreMessage);
-}
-
 // Function to apply bonus card effects
 function applyBonusCardEffects(player, opponent, diceCounts) {
     const bonusGems = { red: 0, blue: 0, green: 0, purple: 0 };
@@ -522,7 +512,8 @@ function updateUI() {
     
     // Update card display to reflect current player's available gems
     updateCardsDisplay();
-
+    updateBonusCardsDisplay();
+    
     // Update player cards display (regular and bonus)
     updatePurchasedCardsDisplay();
     
@@ -909,28 +900,6 @@ const bonusCardTypes = [
         }
     }
 ];
-
-// Generate bonus cards deck
-function generateBonusCardsDeck() {
-    const deck = [];
-    
-    // Add 2 copies of each bonus card type
-    bonusCardTypes.forEach((cardType, index) => {
-        for (let i = 0; i < 2; i++) {
-            deck.push({
-                id: `bonus_${index}_${i}`,
-                name: cardType.name,
-                description: cardType.description,
-                cost: {...cardType.cost},
-                points: cardType.points,
-                type: 'bonus',
-                bonusType: cardType.id
-            });
-        }
-    });
-    
-    return shuffleDeck([...deck]);
-}
 
 // Draw bonus cards function
 function drawBonusCards(count) {

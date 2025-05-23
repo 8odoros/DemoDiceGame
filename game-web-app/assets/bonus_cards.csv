@@ -1,9 +1,10 @@
 id;name;description;cost_red;cost_blue;cost_green;cost_purple;points
-ones_bonus;1s Enhancer;"If you roll more than 2 ones, get a blue gem";2;0;0;0;1
-no_low_numbers;High Roller;"If no 1s and no 2s are rolled, get a green gem";1;1;0;0;1
-all_numbers;Collector;"Get a purple gem if all numbers 1-6 are rolled";1;1;1;0;2
-most_sixes_bonus;Sixes Reward;"If you have the most 6s, also get a red gem";0;0;1;0;1
-double_fives;Five's Friend;"If you roll exactly two 5s, get a blue gem";1;0;1;0;1
-threes_bonus;Thirds Time;"If you roll 2 or 4 threes, get a red gem";0;2;0;0;1
-run_of_three;Mini Straight;"If you roll 3 consecutive numbers, get a green gem";2;0;0;0;1
-four_of_kind;Four Finder;"If you roll 4 of any number, get a purple gem";0;1;1;0;2
+ones_bonus;1s Enhancer;If you roll more than 2 ones, get a blue gem;2;0;0;0;1
+no_low_numbers;High Roller;If no 1s and no 2s are rolled, get a green gem;1;1;0;0;1
+all_numbers;Collector;Get a purple gem if all numbers 1-6 are rolled;1;1;1;0;2
+most_sixes_bonus;Sixes Reward;If you have the most 6s, also get a red gem;0;0;1;0;1
+double_fives;Five's Friend;If you roll exactly two 5s, get a blue gem;1;0;1;0;1
+threes_bonus;Thirds Time;If you roll 2 or 4 threes, get a red gem ;0;2;0;0;1
+run_of_three;Mini Straight;If you roll 3 consecutive numbers, get a green gem;2;0;0;0;1
+four_of_kind;Four Finder;If you roll 4 of any number, get a purple gem;0;1;1;0;2
+Gem Trader;Artifact;Trade 2 red gems for 1 blue gem;2;0;0;0;1

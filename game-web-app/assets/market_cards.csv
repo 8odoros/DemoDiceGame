@@ -1,9 +1,9 @@
 id;name;description;type;cost_red;cost_blue;cost_green;cost_purple;points
-1;Gem Trader;"Trade 2 red gems for 1 blue gem";Artifact;2;0;0;0;1
-2;Gem Collector;"Gain 1 green gem for every 3 gems you own";Artifact;1;1;0;0;2
-3;Purple Seeker;"Gain 1 purple gem if you have at least 2 of each gem";Artifact;1;0;2;0;3
-4;Red Dominator;"Gain 1 point for every 5 red gems you own";Artifact;1;1;0;0;2
-5;Blue Master;"Gain 2 points if you have more blue gems than any other player";Artifact;0;0;2;0;2
-6;Green Guardian;"Gain 1 green gem for every 2 green gems you own";Artifact;1;0;0;0;1
-7;Purple Hoarder;"Gain 3 points if you have at least 3 purple gems";Artifact;1;0;0;1;3
-8;Gem Balancer;"Gain 1 point for every set of 1 red, 1 blue, and 1 green gem";Artifact;0;2;0;0;2
+1;Gem Trader;;Spell;2;0;0;0;4
+2;Gem Collector;;Spell;1;1;0;0;5
+3;Purple Seeker;;Spell;1;0;2;0;6
+4;Red Dominator;;Spell;1;1;0;0;5
+5;Blue Master;;Spell;0;0;2;0;5
+6;Green Guardian;;Spell;1;0;0;0;3
+7;Purple Hoarder;;Spell;1;0;0;1;5
+8;Gem Balancer;;Spell;0;2;0;0;5
