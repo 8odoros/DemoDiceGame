@@ -1,9 +1,9 @@
-id;name;description;type;cost_red;cost_blue;cost_green;cost_purple;points
-1;Gem Trader;;Spell;2;0;0;0;4
-2;Gem Collector;;Spell;1;1;0;0;5
-3;Purple Seeker;;Spell;1;0;2;0;6
-4;Red Dominator;;Spell;1;1;0;0;5
-5;Blue Master;;Spell;0;0;2;0;5
-6;Green Guardian;;Spell;1;0;0;0;3
-7;Purple Hoarder;;Spell;1;0;0;1;5
-8;Gem Balancer;;Spell;0;2;0;0;5
+id;name;description;type;cost_red;cost_blue;cost_green;cost_purple;points;animal_face
+1;Gem Trader;;Spell;2;0;0;0;4;🐵
+2;Gem Collector;;Spell;1;1;0;0;5;🐶
+3;Purple Seeker;;Spell;1;0;2;0;6;🐱
+4;Red Dominator;;Spell;1;1;0;0;5;🦊
+5;Blue Master;;Spell;0;0;2;0;5;🐸
+6;Green Guardian;;Spell;1;0;0;0;3;🐼
+7;Purple Hoarder;;Spell;1;0;0;1;5;🐧
+8;Gem Balancer;;Spell;0;2;0;0;5;🦁

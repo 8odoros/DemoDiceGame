@@ -1116,3 +1116,11 @@ button.disabled {
     cursor: not-allowed;
     border-color: #3e3e42;
 }
+
+/* Animal faces */
+.card-animal-face {
+    font-size: 2rem;
+    display: block;
+    text-align: center;
+    margin-bottom: 4px;
+}

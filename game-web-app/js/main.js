@@ -1276,13 +1276,15 @@ function updateCardsDisplay() {
         // Card content
         cardElement.innerHTML = `
             <div class="card-header">
+                <span class="card-animal-face">${card.animal_face || ''}</span>
                 <div class="card-points">${card.points}</div>
                 <h4 class="card-name">${card.name}</h4>
             </div>
+            <div class="card-description">${card.description}</div>
             <div class="card-cost">
                 ${renderCardCost(card.cost)}
             </div>
-            <div class="card-type">${card.type}</div>
+            <div class="card-type">Bonus</div>
         `;
         
         // Add click handler for card purchase
