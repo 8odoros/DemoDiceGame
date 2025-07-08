@@ -1,52 +1,58 @@
-# Game Web App
+Ideas
 
-## Overview
-This project is a web-based game application that showcases interactive gameplay using HTML, CSS, and JavaScript. The game is designed to be engaging and fun, with a focus on user experience and performance.
+Row 1: Vp and (TODO) End game cards (set collection, Vps from gems not used)
+Row 2: Engine building cards
 
-## Project Structure
-```
-game-web-app
-├── index.html        # Main HTML document for the game
-├── css
-│   ├── style.css     # General styles for the web app
-│   └── game.css      # Specific styles for game elements
-├── js
-│   ├── main.js       # Entry point for JavaScript code
-│   ├── game.js       # Core game logic
-│   └── utils.js      # Utility functions
-├── assets
-│   ├── audio         # Directory for audio files
-│   └── images        # Directory for image files
-└── README.md         # Documentation for the project
-```
+1. Instant Victory Point Cards
+   (Spend gems → Get VP now, no strings attached)
 
-## Getting Started
+   "Lucky Strike" (Cost: 2 red + 2 blue) → 3 VP
 
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, etc.)
-- Basic knowledge of HTML, CSS, and JavaScript
+   "Gem Hoard" (Cost: 1 of each color) → 4 VP
 
-### Installation
-1. Clone the repository to your local machine:
-   ```
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```
-   cd game-web-app
-   ```
+   "Masterpiece" (Cost: 3 purple) → 5 VP
 
-### Running the Game
-1. Open `index.html` in your web browser.
-2. Enjoy playing the game!
+2. Dice Manipulation Cards
+   (Modify rerolls or dice results)
 
-## Features
-- Interactive gameplay with smooth animations
-- Responsive design for various screen sizes
-- Engaging audio and visual elements
+   "Loaded Dice" (Cost: 2 green) → Reroll up to 3 dice, but you must keep the new results.
 
-## Contributing
-If you would like to contribute to this project, please fork the repository and submit a pull request with your changes.
+   "Gem Magnet" (Cost: 1 blue + 1 red) → Choose a color, all players must give you 1 gem of that color (if they have it).
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+   "Wild Surge" (Cost: 3 any color) → Treat one die as any gem color this turn.
+
+3. Player Interaction (Attack/Defense)
+   (Disrupt opponents without long-term effects)
+
+"Gem Theft" (Cost: 2 purple) → Steal 1 gem of your choice from another player.
+
+"Dice Scramble" (Cost: 1 red + 1 green) → Force one opponent to reroll all their remaining dice.
+
+"Shielded Vault" (Cost: 2 blue) → Block the next gem theft targeting you.
+
+4. Gem Conversion & Economy
+   (Flexible spending options)
+
+"Alchemist" (Cost: 2 any color) → Trade 2 gems for 1 gem of any other color.
+
+"Gem Overflow" (Cost: 4 any color) → Discard 4 gems, draw 2 new cards (from the buy row).
+
+"Prismatic Trade" (Cost: 1 purple) → Swap 1 gem with the bank for another color.
+
+5. Risk vs. Reward Cards
+   (Push-your-luck effects)
+
+"Double or Nothing" (Cost: 1 red) → Roll 1 die:
+
+Gem face: Gain 2 gems of that color.
+
+Blank face: Lose 1 gem (your choice).
+
+"Gem Rush" (Cost: 0) → Roll 3 dice, take 1 gem per match… but skip your next turn.
+
+6. Endgame Boosters
+   (Big plays for final rounds)
+
+"Last Gamble" (Cost: 5 any color) → Roll all 8 dice, gain 1 VP per gem rolled.
+
+"Final Offer" (Cost: ALL your gems) → Gain VP = 2x the number of gems spent.

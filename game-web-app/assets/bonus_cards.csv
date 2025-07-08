@@ -8,3 +8,25 @@ threes_bonus;Thirds Time;If you roll 2 or 4 threes, get a red gem ;0;2;0;0;1
 run_of_three;Mini Straight;If you roll 3 consecutive numbers, get a green gem;2;0;0;0;1
 four_of_kind;Four Finder;If you roll 4 of any number, get a purple gem;0;1;1;0;2
 Gem Trader;Artifact;Trade 2 red gems for 1 blue gem;2;0;0;0;1
+
+
+Substitution;Get More Gems;If you roll 4 of any number, get a purple gem;2;0;0;0;1
+
+Substitution;Discount;When buying, discard any card to pay for a gem;2;0;0;0;1
+
+Substitution;Rerolls;All players +1 reroll this round (starting with u);2;0;0;0;1
+Substitution;Rerolls;Discard to reroll once;2;0;0;0;1
+
+Substitution;Set dice;Discard to set 1 dice to the face of your choice;2;0;0;0;1
+
+Substitution;Attack;All other players have 1 less reroll this round;2;0;0;0;1
+Substitution;Attack;All other players use 1 less dice this round;2;0;0;0;1
+Substitution;Attack;All other players, should remove 1 dice this round after the rolls;2;0;0;0;1
+Substitution;Attack;All other players should pay 1 extra gem of their choice this round to buy a card;2;0;0;0;1
+Substitution;Attack;All players discard a gem of their choice;2;0;0;0;1
+
+
+Substitution;Shield;Discard this card to block an attack targeting you;2;0;0;0;1
+
+
+Substitution;Trade;Gems to Gems;2;0;0;0;1
