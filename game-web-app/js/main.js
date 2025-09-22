@@ -3,25 +3,44 @@
 //http-server -p 8008
 //http://localhost:8008/Documents/GitHub/DemoDiceGame/game-web-app/index.html
 
+// Card definitions
+const cardDeck = [
+    { id: 1, name: "Gem Collector", cost: { red: 2, blue: 1, green: 0, purple: 0, wild: 0 }, points: 3 },
+    { id: 2, name: "Lucky Charm", cost: { red: 1, blue: 1, green: 1, purple: 0, wild: 1 }, points: 4 },
+    { id: 3, name: "Ruby Master", cost: { red: 3, blue: 0, green: 0, purple: 1, wild: 0 }, points: 5 },
+    { id: 4, name: "Sapphire Ring", cost: { red: 0, blue: 3, green: 1, purple: 0, wild: 0 }, points: 4 },
+    { id: 5, name: "Emerald Crown", cost: { red: 1, blue: 0, green: 3, purple: 0, wild: 0 }, points: 4 },
+    { id: 6, name: "Mystic Orb", cost: { red: 0, blue: 0, green: 0, purple: 2, wild: 2 }, points: 6 },
+    { id: 7, name: "Ancient Relic", cost: { red: 2, blue: 2, green: 0, purple: 0, wild: 0 }, points: 4 },
+    { id: 8, name: "Crystal Ball", cost: { red: 1, blue: 1, green: 1, purple: 1, wild: 0 }, points: 5 },
+    { id: 9, name: "Golden Chalice", cost: { red: 2, blue: 0, green: 2, purple: 0, wild: 0 }, points: 4 },
+    { id: 10, name: "Silver Amulet", cost: { red: 0, blue: 2, green: 0, purple: 1, wild: 1 }, points: 4 },
+    { id: 11, name: "Diamond Necklace", cost: { red: 1, blue: 0, green: 0, purple: 0, wild: 3 }, points: 5 },
+    { id: 12, name: "Magical Pendant", cost: { red: 0, blue: 1, green: 2, purple: 1, wild: 0 }, points: 4 },
+    { id: 13, name: "Treasure Chest", cost: { red: 3, blue: 1, green: 1, purple: 0, wild: 0 }, points: 6 },
+    { id: 14, name: "Enchanted Ring", cost: { red: 1, blue: 1, green: 0, purple: 2, wild: 0 }, points: 5 },
+    { id: 15, name: "Sacred Scroll", cost: { red: 0, blue: 0, green: 1, purple: 1, wild: 2 }, points: 4 },
+    { id: 16, name: "Phoenix Feather", cost: { red: 4, blue: 0, green: 0, purple: 1, wild: 0 }, points: 7 },
+    { id: 17, name: "Dragon Scale", cost: { red: 0, blue: 0, green: 4, purple: 1, wild: 0 }, points: 7 },
+    { id: 18, name: "Starlight Gem", cost: { red: 2, blue: 2, green: 2, purple: 0, wild: 0 }, points: 8 },
+    { id: 19, name: "Moonstone", cost: { red: 1, blue: 3, green: 0, purple: 2, wild: 0 }, points: 6 },
+    { id: 20, name: "Legendary Artifact", cost: { red: 2, blue: 1, green: 1, purple: 1, wild: 1 }, points: 8 }
+];
+
 // Game state
 let gameState = {
     players: [
-        { name: "Alice", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 },
-        { name: "Bob", gems: { red: 0, blue: 0, green: 0, purple: 0 }, sixes: 0 }
+        { name: "Alice", gems: { red: 0, blue: 0, green: 0, purple: 0 }, blackCubes: 0, points: 0, cards: [], activeCards: [null, null, null], scoringPile: [] },
+        { name: "Bob", gems: { red: 0, blue: 0, green: 0, purple: 0 }, blackCubes: 0, points: 0, cards: [], activeCards: [null, null, null], scoringPile: [] }
     ],
     currentPlayerIndex: 0,
     diceValues: [],
     selectedDice: [],
     rollCount: 0,
-    maxRolls: 4, // FIXED: Now consistent with main.js
+    maxRolls: 4,
     numDice: 8,
-    roundCount: 1, // Start from round 1
-    cards: {
-        deck: [],
-        displayed: [],
-        discarded: []
-    },
-    victoryPoints: [0, 0] // Track victory points for each player
+    roundCount: 1,
+    availableCards: []
 };
 
 let gameRunning = false;
@@ -111,7 +130,6 @@ function init() {
 
 function calculateScore() {
     const currentPlayer = getCurrentPlayer();
-    const opposingPlayer = gameState.players[1 - gameState.currentPlayerIndex];
     
     // Count occurrences of each dice value
     const counts = [0, 0, 0, 0, 0, 0, 0]; // Index 0 is unused
@@ -129,56 +147,80 @@ function calculateScore() {
     const greenGems = Math.floor(counts[3] / 3);
     currentPlayer.gems.green += greenGems;
     
-    // 4s: If there's at least one 4, player gets a green gem
-    const fourGreenGems = counts[4] > 0 ? 1 : 0;
-    currentPlayer.gems.green += fourGreenGems;
+    // 4s: Each quartet of 4s rewards player with 1 purple gem
+    // If you roll less than 4 4s, get a black cube for each 4 rolled, keep them between rounds
+    // Special rule: On turns where you complete having 4 cubes, you get no more cubes even if you have more 4s rolled
+    // No remainder cubes are kept when converting
+    let foursPurpleGems = 0;
+    let newBlackCubes = 0;
+    let cubesConverted = false;
     
-    // 5s: Progressive rewards based on count
-    let fivesRedGems = 0;
-    let fivesBlueGems = 0;
-    let fivesGreenGems = 0;
-    let fivesPurpleGems = 0;
-    
-        // Award gems based on how many 5s were rolled
-        if (counts[5] === 4) {
-            fivesPurpleGems = 1;
-            currentPlayer.gems.purple += 1;
-        } else if (counts[5] === 3) {
-            fivesGreenGems = 1;
-            currentPlayer.gems.green += 1;
-        } else if (counts[5] === 2) {
-            fivesBlueGems = 1;
-            currentPlayer.gems.blue += 1;
-        } else if (counts[5] === 1) {
-            fivesRedGems = 1;
-            currentPlayer.gems.red += 1;
+    if (counts[4] >= 4) {
+        // Player rolled at least 4 fours - get purple gems directly
+        foursPurpleGems = Math.floor(counts[4] / 4);
+        currentPlayer.gems.purple += foursPurpleGems;
+        
+        // Check if player had accumulated black cubes that now convert to purple gems
+        if (currentPlayer.blackCubes >= 4) {
+            const bonusPurpleGems = Math.floor(currentPlayer.blackCubes / 4);
+            currentPlayer.gems.purple += bonusPurpleGems;
+            currentPlayer.blackCubes = 0; // All cubes consumed, no remainder kept
+            foursPurpleGems += bonusPurpleGems;
+            cubesConverted = true;
         }
+    } else {
+        // Player rolled less than 4 fours - check if they can complete sets with existing cubes
+        const totalFours = currentPlayer.blackCubes + counts[4];
+        
+        if (totalFours >= 4) {
+            // Player will complete at least one set of 4 cubes
+            foursPurpleGems = Math.floor(totalFours / 4);
+            currentPlayer.gems.purple += foursPurpleGems;
+            currentPlayer.blackCubes = 0; // All cubes consumed, no remainder kept
+            cubesConverted = true;
+            
+            // Special rule: No additional cubes gained when completing sets
+            newBlackCubes = 0;
+        } else {
+            // Player doesn't complete any sets - add to black cubes normally
+            newBlackCubes = counts[4];
+            currentPlayer.blackCubes += newBlackCubes;
+        }
+    }
     
-    // 6s: Player whot wins the round earns a purple gem
-    // (Already handled in endRound function)
+    // 5s: At least one 5 gives 1 blue gem
+    let fivesBlueGems = 0;
+    if (counts[5] >= 1) {
+        fivesBlueGems = 1;
+        currentPlayer.gems.blue += 1;
+    }
+    
+    // 6s: Progressive rewards based on count
+    // 1:red  2,3:blue  4,5:green  6,7,8:purple
+    let sixesRedGems = 0;
+    let sixesBlueGems = 0;
+    let sixesGreenGems = 0;
+    let sixesPurpleGems = 0;
+    
+    if (counts[6] === 1) {
+        sixesRedGems = 1;
+        currentPlayer.gems.red += 1;
+    } else if (counts[6] === 2 || counts[6] === 3) {
+        sixesBlueGems = 1;
+        currentPlayer.gems.blue += 1;
+    } else if (counts[6] === 4 || counts[6] === 5) {
+        sixesGreenGems = 1;
+        currentPlayer.gems.green += 1;
+    } else if (counts[6] >= 6) {
+        sixesPurpleGems = 1;
+        currentPlayer.gems.purple += 1;
+    }
     
     // Update total gem counts for logging
-    let totalRedGems = redGems + fivesRedGems;     // Changed from const to let
-    let totalBlueGems = blueGems + fivesBlueGems;
-    let totalGreenGems = greenGems + fivesGreenGems + fourGreenGems;
-    let totalPurpleGems = fivesPurpleGems;
-    
-    // Apply bonus card effects
-    const bonusGems = applyBonusCardEffects(currentPlayer, opposingPlayer, counts);
-    if (bonusGems ) {
-        logGameEvent('player', 'Gems earned from bonus ards: '+bonusGems.red+' red, '+bonusGems.blue+' blue, '+bonusGems.green+' green, '+bonusGems.purple+' purple.');
-    }
-
-    // Add bonus gems to total counts
-    for (const [gemType, count] of Object.entries(bonusGems)) {
-        if (gemType === 'red') totalRedGems += count;
-        else if (gemType === 'blue') totalBlueGems += count;
-        else if (gemType === 'green') totalGreenGems += count;
-        else if (gemType === 'purple') totalPurpleGems += count;
-        
-        // Add to player's gem count
-        currentPlayer.gems[gemType] += count;
-    }
+    let totalRedGems = redGems + sixesRedGems;
+    let totalBlueGems = blueGems + fivesBlueGems + sixesBlueGems;
+    let totalGreenGems = greenGems + sixesGreenGems;
+    let totalPurpleGems = foursPurpleGems + sixesPurpleGems;
     
     // Log the score with comprehensive details
     let scoreMessage = `${currentPlayer.name} earned: `;
@@ -186,6 +228,11 @@ function calculateScore() {
     if (totalBlueGems > 0) scoreMessage += `${totalBlueGems} blue gem${totalBlueGems > 1 ? 's' : ''}, `;
     if (totalGreenGems > 0) scoreMessage += `${totalGreenGems} green gem${totalGreenGems > 1 ? 's' : ''}, `;
     if (totalPurpleGems > 0) scoreMessage += `${totalPurpleGems} purple gem${totalPurpleGems > 1 ? 's' : ''}, `;
+    
+    // Add black cubes info if any were gained
+    if (newBlackCubes > 0) {
+        scoreMessage += `${newBlackCubes} black cube${newBlackCubes > 1 ? 's' : ''}, `;
+    }
     
     // Remove trailing comma and space
     scoreMessage = scoreMessage.replace(/, $/, '');
@@ -196,6 +243,14 @@ function calculateScore() {
     }
     
     logGameEvent('player', scoreMessage);
+    
+    // Log black cubes status and conversions
+    if (cubesConverted) {
+        logGameEvent('player', `${currentPlayer.name} converted black cubes to purple gem${foursPurpleGems > 1 ? 's' : ''}!`);
+    }
+    if (currentPlayer.blackCubes > 0) {
+        logGameEvent('player', `${currentPlayer.name} now has ${currentPlayer.blackCubes} black cube${currentPlayer.blackCubes > 1 ? 's' : ''}.`);
+    }
 }
 
 function getCurrentPlayer() {
@@ -281,9 +336,6 @@ function rollDice() {
         }
     }
 
-    // Count sixes for current player
-    getCurrentPlayer().sixes = gameState.diceValues.filter(value => value === 6).length;
-    
     // Increment roll count
     gameState.rollCount++;
     
@@ -369,46 +421,11 @@ function toggleDiceSelection(index) {
     }
 }
 
-// Function to apply bonus card effects
-function applyBonusCardEffects(player, opponent, diceCounts) {
-    const bonusGems = { red: 0, blue: 0, green: 0, purple: 0 };
-    
-    // If player has no bonus cards, return empty bonus
-    if (!player.bonusCards || player.bonusCards.length === 0) {
-        return bonusGems;
-    }
-    
-    // Apply each bonus card effect
-    player.bonusCards.forEach(card => {
-        const effect = getBonusCardEffect(card.bonusType);
-        if (effect) {
-            const result = effect(diceCounts, player, opponent);
-            if (result) {
-                // Log the bonus
-                logGameEvent('bonus', `${player.name}'s "${card.name}" activated: ${card.description}`);
-                
-                // Add result to bonus gems
-                for (const [gemType, count] of Object.entries(result)) {
-                    bonusGems[gemType] += count;
-                }
-            }
-        }
-    });
-    
-    return bonusGems;
-}
-
-// Helper to get the effect function for a bonus card type
-function getBonusCardEffect(bonusType) {
-    const card = bonusCardTypes.find(c => c.id === bonusType);
-    return card ? card.effect : null;
-}
-
 function endTurn() {
     calculateScore();
     
     // Log the end of turn
-    logGameEvent('player', `${getCurrentPlayer().name} ended their turn with ${getCurrentPlayer().sixes} sixes.`);
+    logGameEvent('player', `${getCurrentPlayer().name} ended their turn.`);
     
     // Reset roll count and selected dice
     gameState.rollCount = 0;
@@ -448,23 +465,6 @@ function endTurn() {
 }
 
 function endRound() {
-    const players = gameState.players;
-    
-    // Compare number of sixes between players
-    if (players[0].sixes > players[1].sixes) {
-        players[0].gems.purple += 1;
-        logGameEvent('system', `${players[0].name} wins the round with ${players[0].sixes} sixes and earns a purple gem!`);
-    } else if (players[1].sixes > players[0].sixes) {
-        players[1].gems.purple += 1;
-        logGameEvent('system', `${players[1].name} wins the round with ${players[1].sixes} sixes and earns a purple gem!`);
-    } else {
-        logGameEvent('system', `Round ends in a tie! No purple gems awarded.`);
-    }
-    
-    // Reset sixes counts
-    players[0].sixes = 0;
-    players[1].sixes = 0;
-
     // Increment round count after both players have played
     gameState.roundCount++;
     logGameEvent('system', `Round ${gameState.roundCount} begins.`);
@@ -472,8 +472,7 @@ function endRound() {
 }
 
 // Keep track of previous values for animation
-let prevVictoryPoints = [0, 0];
-let prevSixes = [0, 0];
+let prevBlackCubes = [0, 0];
 
 function updateUI() {
     // Update round counter
@@ -491,10 +490,14 @@ function updateUI() {
     
     // Update current player indicator
     updateActivePlayer();
+
+    // Update black cubes counter for BOTH players
+    document.getElementById('player1-black-cubes').textContent = gameState.players[0].blackCubes;
+    document.getElementById('player2-black-cubes').textContent = gameState.players[1].blackCubes;
     
-    // Update sixes counter for BOTH players (not just current)
-    document.getElementById('player1-sixes').textContent = gameState.players[0].sixes;
-    document.getElementById('player2-sixes').textContent = gameState.players[1].sixes;
+    // Update points for both players
+    document.getElementById('player1-points').textContent = gameState.players[0].points;
+    document.getElementById('player2-points').textContent = gameState.players[1].points;
 
     // Update dice selection visualization
     updateDiceSelection();
@@ -502,104 +505,27 @@ function updateUI() {
     // Ensure roll button visibility
     updateRollButtonVisibility();
     updateRollButtonText();
-
-    // Check if the game has ended
-    checkGameEnd();
     
-    // Update victory points display
-    document.getElementById('player1-vp').textContent = gameState.victoryPoints[0];
-    document.getElementById('player2-vp').textContent = gameState.victoryPoints[1];
-    
-    // Update card display to reflect current player's available gems
-    updateCardsDisplay();
-    updateBonusCardsDisplay();
-    
-    // Update player cards display (regular and bonus)
-    updatePurchasedCardsDisplay();
-    
-    // Update victory points with animation if changed
+    // Update black cubes counter with animation if changed
     for (let i = 0; i < 2; i++) {
-        const vpElement = document.getElementById(`player${i+1}-vp`);
-        if (vpElement) {
-            if (gameState.victoryPoints[i] !== prevVictoryPoints[i]) {
-                vpElement.classList.add('pulse');
-                setTimeout(() => vpElement.classList.remove('pulse'), 500);
-                prevVictoryPoints[i] = gameState.victoryPoints[i];
+        const blackCubesElement = document.getElementById(`player${i+1}-black-cubes`);
+        if (blackCubesElement) {
+            if (gameState.players[i].blackCubes !== prevBlackCubes[i]) {
+                blackCubesElement.classList.add('pulse');
+                setTimeout(() => blackCubesElement.classList.remove('pulse'), 500);
+                prevBlackCubes[i] = gameState.players[i].blackCubes;
             }
-            vpElement.textContent = gameState.victoryPoints[i];
+            blackCubesElement.textContent = gameState.players[i].blackCubes;
         }
     }
     
-    // Update sixes counter with animation if changed
-    for (let i = 0; i < 2; i++) {
-        const sixesElement = document.getElementById(`player${i+1}-sixes`);
-        if (sixesElement) {
-            if (gameState.players[i].sixes !== prevSixes[i]) {
-                sixesElement.classList.add('pulse');
-                setTimeout(() => sixesElement.classList.remove('pulse'), 500);
-                prevSixes[i] = gameState.players[i].sixes;
-            }
-            sixesElement.textContent = gameState.players[i].sixes;
-        }
+    // Update card UI if it exists
+    if (document.getElementById('available-cards')) {
+        updateCardUI();
     }
-    updatePurchasedCardsDisplay();
-}
-
-// Function to update the display of purchased bonus cards
-function updatePurchasedBonusCardsDisplay() {
-    for (let i = 0; i < 2; i++) {
-        const player = gameState.players[i];
-        const container = document.getElementById(`player${i+1}-purchased-cards`);
-        
-        if (!container) continue;
-        
-        // Skip if we've already added standard cards
-        const bonusStart = container.querySelectorAll('.card-thumbnail').length;
-        
-        // Add bonus card thumbnails
-        if (player.bonusCards && player.bonusCards.length > 0) {
-            player.bonusCards.forEach((card, idx) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.classList.add('card-thumbnail', 'bonus-card-thumbnail');
-                
-                // Points badge
-                const pointsBadge = document.createElement('div');
-                pointsBadge.classList.add('points-badge');
-                pointsBadge.textContent = card.points;
-                thumbnail.appendChild(pointsBadge);
-                
-                // Bonus indicator
-                const bonusIndicator = document.createElement('div');
-                bonusIndicator.classList.add('bonus-indicator');
-                bonusIndicator.textContent = 'B';
-                thumbnail.appendChild(bonusIndicator);
-                
-                // Create preview
-                const previewContainer = document.createElement('div');
-                previewContainer.classList.add('card-preview-container');
-                
-                const preview = document.createElement('div');
-                preview.classList.add('card-preview', 'bonus-card');
-                
-                preview.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-points">${card.points}</div>
-                        <h4 class="card-name">${card.name}</h4>
-                    </div>
-                    <div class="card-description">${card.description}</div>
-                    <div class="card-cost">
-                        ${renderCardCost(card.cost)}
-                    </div>
-                    <div class="card-type">Bonus</div>
-                `;
-                
-                previewContainer.appendChild(preview);
-                thumbnail.appendChild(previewContainer);
-                
-                container.appendChild(thumbnail);
-            });
-        }
-    }
+    
+    // Update player boards
+    updatePlayerBoards();
 }
 
 function updatePlayerGems() {
@@ -667,51 +593,7 @@ function resetTurn() {
     updateUI();
 }
 
-// Add this function to parse CSV data
-function parseCSV(csvText) {
-    const rows = csvText.trim().split('\n');
-    const headers = rows.shift().split(';');
-    return rows.map(row => {
-        const values = row.split(';');
-        const card = headers.reduce((acc, header, index) => {
-            acc[header.trim()] = isNaN(values[index]) ? values[index].trim() : parseInt(values[index], 10);
-            return acc;
-        }, {});
-        // Combine cost columns into a single object
-        card.cost = {
-            red: card.cost_red || 0,
-            blue: card.cost_blue || 0,
-            green: card.cost_green || 0,
-            purple: card.cost_purple || 0
-        };
-
-        card.type = card.type || 'regular'; // Default to 'regular' if type is not specified
-        
-        // Remove individual cost columns
-        delete card.cost_red;
-        delete card.cost_blue;
-        delete card.cost_green;
-        delete card.cost_purple;
-        return card;
-    });
-}
-
-// Add this function to load cards from a CSV file
-async function loadCardsFromCSV(filePath) {
-    try {
-        const response = await fetch(filePath);
-        if (!response.ok) {
-            throw new Error(`Failed to load ${filePath}: ${response.statusText}`);
-        }
-        const csvText = await response.text();
-        return parseCSV(csvText);
-    } catch (error) {
-        console.error(`Error loading cards from ${filePath}:`, error);
-        return [];
-    }
-}
-
-// Update the startGame function to load cards from CSV files
+// Update the startGame function to initialize a simple dice game
 async function startGame() {
     // Reset game state
     gameState = {
@@ -719,16 +601,20 @@ async function startGame() {
             { 
                 name: "Alice", 
                 gems: { red: 0, blue: 0, green: 0, purple: 0 }, 
-                sixes: 0,
-                purchasedCards: [],
-                bonusCards: []
+                blackCubes: 0,
+                points: 0,
+                cards: [],
+                activeCards: [null, null, null],
+                scoringPile: []
             },
             { 
                 name: "Bob", 
                 gems: { red: 0, blue: 0, green: 0, purple: 0 }, 
-                sixes: 0,
-                purchasedCards: [],
-                bonusCards: []
+                blackCubes: 0,
+                points: 0,
+                cards: [],
+                activeCards: [null, null, null],
+                scoringPile: []
             }
         ],
         currentPlayerIndex: 0,
@@ -738,25 +624,11 @@ async function startGame() {
         maxRolls: 4,
         numDice: 8,
         roundCount: 1,
-        cards: {
-            deck: [],
-            displayed: [],
-            discarded: []
-        },
-        victoryPoints: [0, 0]
+        availableCards: []
     };
-
-    // Load cards from CSV files
-    const bonus_Cards = await loadCardsFromCSV('assets/bonus_cards.csv');
-    const market_Cards = await loadCardsFromCSV('assets/market_cards.csv');
-
-    // Initialize the card decks
-    gameState.cards.deck = shuffleDeck(market_Cards);
-    gameState.bonusCards = {
-        deck: shuffleDeck(bonus_Cards),
-        displayed: [],
-        discarded: []
-    };
+    
+    // Initialize card deck
+    initializeCards();
 
     // Set game as running
     gameRunning = true;
@@ -764,9 +636,6 @@ async function startGame() {
     // Clear history
     const historyEl = document.getElementById('game-history');
     historyEl.innerHTML = '';
-
-    // Remove redundant UI elements
-    cleanupRedundantElements();
 
     // Show UI elements
     document.querySelector('.dice-container').classList.remove('hidden');
@@ -795,230 +664,19 @@ async function startGame() {
     // Add question mark dice at the start of the game
     createQuestionDice();
 
-    // Draw initial regular cards
-    drawCards(5);
-
-    // Draw initial bonus cards
-    drawBonusCards(5);
-
-    // Update UI to show the cards
-    updateUI();
-}
-
-// Define bonus card types with proper effect implementations
-const bonusCardTypes = [
-    {
-        id: "ones_bonus",
-        name: "1s Enhancer",
-        description: "If you roll more than 2 ones, get a blue gem",
-        cost: { red: 2, blue: 0, green: 0, purple: 0 },
-        points: 1,
-        effect: function(diceCounts) {
-            return diceCounts[1] > 2 ? { blue: 1 } : null;
-        }
-    },
-    {
-        id: "no_low_numbers",
-        name: "High Roller",
-        description: "If no 1s and no 2s are rolled, get a green gem",
-        cost: { red: 1, blue: 1, green: 0, purple: 0 },
-        points: 1,
-        effect: function(diceCounts) {
-            return (diceCounts[1] === 0 && diceCounts[2] === 0) ? { green: 1 } : null;
-        }
-    },
-    {
-        id: "all_numbers",
-        name: "Collector",
-        description: "Get a purple gem if all numbers 1-6 are rolled",
-        cost: { red: 1, blue: 1, green: 1, purple: 0 },
-        points: 2,
-        effect: function(diceCounts) {
-            return (diceCounts[1] > 0 && diceCounts[2] > 0 && counts[3] > 0 && 
-                   counts[4] > 0 && counts[5] > 0 && counts[6] > 0) ? 
-                   { purple: 1 } : null;
-        }
-    },
-    {
-        id: "most_sixes_bonus",
-        name: "Sixes Reward",
-        description: "If you have the most 6s, also get a red gem",
-        cost: { red: 0, blue: 0, green: 1, purple: 0 },
-        points: 1,
-        effect: function(diceCounts, player, opponent) {
-            return (player.sixes > opponent.sixes) ? { red: 1 } : null;
-        }
-    },
-    {
-        id: "double_fives",
-        name: "Five's Friend",
-        description: "If you roll exactly two 5s, get a blue gem",
-        cost: { red: 1, blue: 0, green: 1, purple: 0 },
-        points: 1,
-        effect: function(diceCounts) {
-            return diceCounts[5] === 2 ? { blue: 1 } : null;
-        }
-    },
-    {
-        id: "threes_bonus",
-        name: "Thirds Time",
-        description: "If you roll 2 or 4 threes, get a red gem",
-        cost: { red: 0, blue: 2, green: 0, purple: 0 },
-        points: 1,
-        effect: function(diceCounts) {
-            return (diceCounts[3] === 2 || diceCounts[3] === 4) ? { red: 1 } : null;
-        }
-    },
-    {
-        id: "run_of_three",
-        name: "Mini Straight", 
-        description: "If you roll 3 consecutive numbers, get a green gem",
-        cost: { red: 2, blue: 0, green: 0, purple: 0 },
-        points: 1,
-        effect: function(diceCounts) {
-            for (let i = 1; i <= 4; i++) {
-                if (diceCounts[i] > 0 && diceCounts[i+1] > 0 && diceCounts[i+2] > 0) {
-                    return { green: 1 };
-                }
-            }
-            return null;
-        }
-    },
-    {
-        id: "four_of_kind",
-        name: "Four Finder",
-        description: "If you roll 4 of any number, get a purple gem",
-        cost: { red: 0, blue: 1, green: 1, purple: 0 },
-        points: 2,
-        effect: function(diceCounts) {
-            for (let i = 1; i <= 6; i++) {
-                if (diceCounts[i] >= 4) {
-                    return { purple: 1 };
-                }
-            }
-            return null;
-        }
-    }
-];
-
-// Draw bonus cards function
-function drawBonusCards(count) {
-    const cardsToDisplay = Math.min(count, gameState.bonusCards.deck.length);
-    
-    for (let i = 0; i < cardsToDisplay; i++) {
-        if (gameState.bonusCards.deck.length > 0) {
-            gameState.bonusCards.displayed.push(gameState.bonusCards.deck.pop());
-        }
-    }
-    
-    updateBonusCardsDisplay();
-}
-
-// Display bonus cards
-function updateBonusCardsDisplay() {
-    // Add safety check to prevent errors
-    if (!gameState.bonusCards || !gameState.bonusCards.displayed) {
-        console.log("Bonus cards not yet initialized, skipping display update");
-        return;
-    }
-    
-    const bonusCardDisplay = document.querySelector('.bonus-card-display');
-    if (!bonusCardDisplay) {
-        console.error("Bonus card display container not found!");
-        return;
-    }
-    
-    bonusCardDisplay.innerHTML = '';
-    
-    gameState.bonusCards.displayed.forEach((card, index) => {
-        const cardElement = document.createElement('div');
-        cardElement.classList.add('card', 'bonus-card');
-        cardElement.dataset.index = index;
-        
-        // Check if current player can afford this card
-        const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
-        if (!canAfford) {
-            cardElement.classList.add('unavailable');
-        }
-        
-        // Card content
-        cardElement.innerHTML = `
-            <div class="card-header">
-                <div class="card-points">${card.points}</div>
-                <h4 class="card-name">${card.name}</h4>
-            </div>
-            <div class="card-description">${card.description}</div>
-            <div class="card-cost">
-                ${renderCardCost(card.cost)}
-            </div>
-            <div class="card-type">Bonus</div>
-        `;
-        
-        // Add click handler for card purchase
-        cardElement.addEventListener('click', () => {
-                purchaseBonusCard(index);
-        });
-        
-        bonusCardDisplay.appendChild(cardElement);
-    });
-}
-
-// Enhanced purchaseBonusCard function with debugging
-function purchaseBonusCard(index) {
-    console.log(`Attempting to purchase bonus card at index ${index}`);
-    
-    const card = gameState.bonusCards.displayed[index];
-    console.log("Card to purchase:", card);
-    
-    const player = gameState.players[gameState.currentPlayerIndex];
-    console.log("Player attempting to purchase:", player);
-    
-    // Check if player can afford card
-    const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
-    console.log(`Player can afford card: ${canAfford}`);
-    
-    if (!canAfford) {
-        console.log("Player doesn't have enough gems");
-        showNotification("You don't have enough gems to purchase this card!");
-        return;
-    }
-    
-    console.log("Proceeding with purchase...");
-    
-    // Initialize bonusCards array if needed
-    if (!player.bonusCards) {
-        player.bonusCards = [];
-    }
-    
-    // Deduct gems
-    for (const [gemType, count] of Object.entries(card.cost)) {
-        player.gems[gemType] -= count;
-        console.log(`Deducted ${count} ${gemType} gems. Player now has ${player.gems[gemType]}`);
-    }
-    
-    // Add victory points
-    gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
-    console.log(`Added ${card.points} victory points. Player now has ${gameState.victoryPoints[gameState.currentPlayerIndex]}`);
-    
-    // Add to player's bonus cards collection
-    player.bonusCards.push({...card});
-    console.log(`Added card to player's bonus cards. Player now has ${player.bonusCards.length} bonus cards`);
-    
-    // Log purchase
-    logGameEvent('player', `${player.name} purchased ${card.name} (${card.description})`);
-    
-    // Move card to discarded pile
-    gameState.bonusCards.discarded.push(card);
-    gameState.bonusCards.displayed.splice(index, 1);
-    
-    // Draw a new card
-    if (gameState.bonusCards.deck.length > 0) {
-        console.log(`Drawing a new bonus card from deck (${gameState.bonusCards.deck.length} cards remaining)`);
-        drawBonusCards(1);
-    }
-    
     // Update UI
     updateUI();
+}
+
+// Add this function to update the roll button text based on game state
+function updateRollButtonText() {
+    const rollBtn = document.getElementById('roll-btn');
+    
+    if (gameState.rollCount === 0) {
+        rollBtn.textContent = "Roll All Dice";
+    } else {
+        rollBtn.textContent = "Roll Selected Dice";
+    }
 }
 
 function createDice() {
@@ -1131,226 +789,310 @@ function updateDiceSelection() {
     });
 }
 
-// Add this function to update the roll button text based on game state
-function updateRollButtonText() {
-    const rollBtn = document.getElementById('roll-btn');
-    
-    if (gameState.rollCount === 0) {
-        rollBtn.textContent = "Roll All Dice";
-    } else {
-        rollBtn.textContent = "Roll Selected Dice";
-    }
+// ============================
+// CARD SYSTEM FUNCTIONS
+// ============================
+
+function initializeCards() {
+    // Shuffle the deck and make first 3 cards available
+    gameState.availableCards = shuffleArray([...cardDeck]).slice(0, 3);
+    updateCardUI();
 }
 
-// Add this to updateUI or as a separate function called from updateUI
-function checkGameEnd() {
-    const maxPoints = 10; // Adjust based on desired game length
-    
-    if (gameState.victoryPoints[0] >= maxPoints || gameState.victoryPoints[1] >= maxPoints) {
-        // Determine winner
-        let winner;
-        if (gameState.victoryPoints[0] > gameState.victoryPoints[1]) {
-            winner = gameState.players[0].name;
-        } else if (gameState.victoryPoints[1] > gameState.victoryPoints[0]) {
-            winner = "It's a tie!";
-        }
-        
-        // Log game end
-        logGameEvent('system', `Game over! ${winner} wins with ${Math.max(gameState.victoryPoints[0], gameState.victoryPoints[1])} victory points!`);
-        
-        // Disable game controls
-        gameRunning = false;
-        document.getElementById('roll-btn').disabled = true;
-        document.getElementById('end-turn-btn').disabled = true;
-        
-        // Show game end notification
-        showNotification(`Game over! ${winner} wins!`, 6000);
-    }
-}
-
-// Shuffle deck function
-function shuffleDeck(deck) {
-    for (let i = deck.length - 1; i > 0; i--) {
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    return deck;
+    return shuffled;
 }
 
-// Draw cards from deck
-function drawCards(count) {
-    // Draw specified number of cards or as many as possible
-    const cardsToDisplay = Math.min(count, gameState.cards.deck.length);
+function updateCardUI() {
+    const cardContainer = document.getElementById('available-cards');
+    cardContainer.innerHTML = '';
     
-    for (let i = 0; i < cardsToDisplay; i++) {
-        // Move card from deck to displayed
-        if (gameState.cards.deck.length > 0) {
-            gameState.cards.displayed.push(gameState.cards.deck.pop());
-        }
-    }
-    
-    // Update the displayed cards UI
-    updateCardsDisplay();
-}
-
-// Updated function to display multiple gem icons instead of counts
-function renderCardCost(cost) {
-    let html = '';
-    const gemEntries = Object.entries(cost).filter(([_, count]) => count > 0);
-
-    // Calculate total gems required
-    const totalGems = gemEntries.reduce((sum, [_, count]) => sum + count, 0);
-
-    // Create a gem container
-    html += '<div class="gem-requirements-container">';
-
-    // If total gems are 3 or more, split into two rows
-    if (totalGems >= 3) {
-        let row1 = '';
-        let row2 = '';
-        let currentRow = 1;
-        let gemsInRow = 0;
-
-        gemEntries.forEach(([gemType, count]) => {
-            for (let i = 0; i < count; i++) {
-                const gemHtml = `
-                    <div class="gem-requirement">
-                        <div class="gem-requirement-icon gem-requirement-${gemType}"></div>
-                    </div>
-                `;
-
-                if (currentRow === 1) {
-                    row1 += gemHtml;
-                    gemsInRow++;
-                    if (gemsInRow >= Math.ceil(totalGems / 2)) {
-                        currentRow = 2;
-                        gemsInRow = 0;
-                    }
-                } else {
-                    row2 += gemHtml;
-                }
-            }
-        });
-
-        // Add rows to the container
-        html += `<div class="gem-row">${row1}</div>`;
-        html += `<div class="gem-row">${row2}</div>`;
-    } else {
-        // Single row for fewer than 3 gems
-        gemEntries.forEach(([gemType, count]) => {
-            for (let i = 0; i < count; i++) {
-                html += `
-                    <div class="gem-requirement">
-                        <div class="gem-requirement-icon gem-requirement-${gemType}"></div>
-                    </div>
-                `;
-            }
-        });
-    }
-
-    html += '</div>'; // Close the container
-    return html;
-}
-
-// Update regular cards display
-function updateCardsDisplay() {
-    const cardDisplay = document.querySelector('.card-display');
-    if (!cardDisplay) {
-        console.error("Card display container not found!");
-        return;
-    }
-    
-    cardDisplay.innerHTML = '';
-    
-    gameState.cards.displayed.forEach((card, index) => {
-        const cardElement = document.createElement('div');
-        cardElement.classList.add('card', `card-${card.type}`);
-        cardElement.dataset.index = index;
-        
-        // Check if current player can afford this card
-        const canAfford = canPlayerAffordCard(gameState.currentPlayerIndex, card);
-        if (!canAfford) {
-            cardElement.classList.add('unavailable');
-        }
-        
-        // Card content
-        cardElement.innerHTML = `
-            <div class="card-header">
-                <span class="card-animal-face">${card.animal_face || ''}</span>
-                <div class="card-points">${card.points}</div>
-                <h4 class="card-name">${card.name}</h4>
-            </div>
-            <div class="card-description">${card.description}</div>
-            <div class="card-cost">
-                ${renderCardCost(card.cost)}
-            </div>
-            <div class="card-type">Bonus</div>
-        `;
-        
-        // Add click handler for card purchase
-        cardElement.addEventListener('click', () => {
-                purchaseCard(index);
-        });
-        
-        cardDisplay.appendChild(cardElement);
+    gameState.availableCards.forEach((card, index) => {
+        const cardElement = createCardElement(card, index);
+        cardContainer.appendChild(cardElement);
     });
 }
 
-// Check if player can afford a card
+function createCardElement(card, index) {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+    cardDiv.dataset.cardId = card.id;
+    
+    const canAfford = canPlayerAffordCard(getCurrentPlayer(), card);
+    if (!canAfford) {
+        cardDiv.classList.add('unaffordable');
+    }
+    
+    cardDiv.innerHTML = `
+        <div class="card-header">
+            <h4 class="card-name">${card.name}</h4>
+            <div class="card-points">${card.points} pts</div>
+        </div>
+        <div class="card-cost">
+            ${formatCardCost(card.cost)}
+        </div>
+        <button class="buy-card-btn" ${!canAfford ? 'disabled' : ''} 
+                onclick="buyCard(${index})">
+            ${canAfford ? 'Buy' : 'Can\'t Afford'}
+        </button>
+    `;
+    
+    return cardDiv;
+}
+
+function formatCardCost(cost) {
+    const gems = [];
+    
+    if (cost.red > 0) gems.push(`<span class="cost-gem red">${cost.red}</span>`);
+    if (cost.blue > 0) gems.push(`<span class="cost-gem blue">${cost.blue}</span>`);
+    if (cost.green > 0) gems.push(`<span class="cost-gem green">${cost.green}</span>`);
+    if (cost.purple > 0) gems.push(`<span class="cost-gem purple">${cost.purple}</span>`);
+    if (cost.wild > 0) gems.push(`<span class="cost-gem wild">${cost.wild}</span>`);
+    
+    return gems.join(' ');
+}
+
 function canPlayerAffordCard(player, card) {
-    if (!card.cost) {
-        console.error('Card cost is undefined:', card);
-        return false;
-    }
-    return Object.entries(card.cost).every(([gemType, cost]) => {
-        return gameState.players[player].gems[gemType] >= cost;
-    });
+    const cost = card.cost;
+    let totalCost = cost.red + cost.blue + cost.green + cost.purple + cost.wild;
+    let availableGems = player.gems.red + player.gems.blue + player.gems.green + player.gems.purple;
+    
+    // Check if player has enough specific gems
+    let neededSpecific = Math.max(0, cost.red - player.gems.red) +
+                        Math.max(0, cost.blue - player.gems.blue) +
+                        Math.max(0, cost.green - player.gems.green) +
+                        Math.max(0, cost.purple - player.gems.purple);
+    
+    let neededWild = cost.wild;
+    let totalNeeded = neededSpecific + neededWild;
+    
+    return availableGems >= totalNeeded;
 }
 
-// Purchase a card
-function purchaseCard(cardIndex) {
-    const card = gameState.cards.displayed[cardIndex];
-    const player = gameState.players[gameState.currentPlayerIndex];
+function buyCard(cardIndex) {
+    const card = gameState.availableCards[cardIndex];
+    const player = getCurrentPlayer();
     
-    // Check if player can afford card
-    if (!canPlayerAffordCard(gameState.currentPlayerIndex, card)) {
-        showNotification("You don't have enough gems to purchase this card!");
+    if (!canPlayerAffordCard(player, card)) {
+        logGameEvent('system', `${player.name} cannot afford ${card.name}`);
         return;
     }
     
-    // Initialize purchased cards array if it doesn't exist
-    if (!player.purchasedCards) {
-        player.purchasedCards = [];
+    // Show modal for payment if wild gems are involved
+    if (card.cost.wild > 0) {
+        showPaymentModal(card, cardIndex);
+    } else {
+        completeCardPurchase(card, cardIndex, card.cost);
     }
+}
+
+function showPaymentModal(card, cardIndex) {
+    const modal = document.createElement('div');
+    modal.className = 'payment-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Purchase ${card.name}</h3>
+            <p>Cost: ${formatCardCost(card.cost)}</p>
+            <div class="payment-section">
+                <h4>Pay with your gems:</h4>
+                <div class="gem-payment">
+                    <label>Red: <input type="number" id="pay-red" min="0" max="${getCurrentPlayer().gems.red}" value="0"></label>
+                    <label>Blue: <input type="number" id="pay-blue" min="0" max="${getCurrentPlayer().gems.blue}" value="0"></label>
+                    <label>Green: <input type="number" id="pay-green" min="0" max="${getCurrentPlayer().gems.green}" value="0"></label>
+                    <label>Purple: <input type="number" id="pay-purple" min="0" max="${getCurrentPlayer().gems.purple}" value="0"></label>
+                </div>
+                <div class="modal-buttons">
+                    <button onclick="processPaymentForCard(${card.id}, ${cardIndex})">Confirm Purchase</button>
+                    <button onclick="closePaymentModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Store the card info for processing
+    window.currentCardForPayment = card;
+    
+    document.body.appendChild(modal);
+}
+
+function processPaymentForCard(cardId, cardIndex) {
+    const card = window.currentCardForPayment;
+    if (!card) return;
+    
+    const payRed = parseInt(document.getElementById('pay-red').value) || 0;
+    const payBlue = parseInt(document.getElementById('pay-blue').value) || 0;
+    const payGreen = parseInt(document.getElementById('pay-green').value) || 0;
+    const payPurple = parseInt(document.getElementById('pay-purple').value) || 0;
+    
+    const payment = { red: payRed, blue: payBlue, green: payGreen, purple: payPurple, wild: 0 };
+    const totalPaid = payRed + payBlue + payGreen + payPurple;
+    const totalCost = card.cost.red + card.cost.blue + card.cost.green + card.cost.purple + card.cost.wild;
+    
+    if (totalPaid !== totalCost) {
+        alert(`Payment must equal ${totalCost} gems`);
+        return;
+    }
+    
+    closePaymentModal();
+    completeCardPurchase(card, cardIndex, payment);
+}
+
+function closePaymentModal() {
+    const modal = document.querySelector('.payment-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function completeCardPurchase(card, cardIndex, payment) {
+    const player = getCurrentPlayer();
     
     // Deduct gems
-    for (const [gemType, count] of Object.entries(card.cost)) {
-        player.gems[gemType] -= count;
+    player.gems.red -= payment.red;
+    player.gems.blue -= payment.blue;
+    player.gems.green -= payment.green;
+    player.gems.purple -= payment.purple;
+    
+    // Check if player has empty slots
+    const emptySlotIndex = player.activeCards.findIndex(slot => slot === null);
+    
+    if (emptySlotIndex !== -1) {
+        // Place card in empty slot
+        player.activeCards[emptySlotIndex] = card;
+        logGameEvent('player', `${player.name} bought ${card.name} and placed it in slot ${emptySlotIndex + 1}!`);
+    } else {
+        // All slots are full - need to replace a card
+        showReplacementModal(card, cardIndex, payment);
+        return; // Don't continue with the rest of the function yet
     }
     
-    // Add victory points
-    if (!gameState.victoryPoints) {
-        gameState.victoryPoints = [0, 0];
-    }
-    gameState.victoryPoints[gameState.currentPlayerIndex] += card.points;
+    // Remove card from available cards and add new one
+    gameState.availableCards.splice(cardIndex, 1);
+    addNewCardToMarket();
     
-    // Add to player's purchased cards collection
-    player.purchasedCards.push({...card}); // Store a copy of the card
-    
-    // Log purchase
-    logGameEvent('player', `${player.name} purchased ${card.name || 'a card'} for ${card.points} victory points!`);
-    
-    // Move card to discarded pile
-    gameState.cards.discarded.push(card);
-    gameState.cards.displayed.splice(cardIndex, 1);
-    
-    // Draw a new card
-    if (gameState.cards.deck.length > 0) {
-        drawCards(1);
-    }
-    
-    // Update UI
     updateUI();
+    updateCardUI();
+}
+
+function showReplacementModal(newCard, cardIndex, payment) {
+    const player = getCurrentPlayer();
+    
+    const modal = document.createElement('div');
+    modal.className = 'replacement-modal';
+    modal.innerHTML = `
+        <div class="replacement-modal-content">
+            <h3>Replace a Card</h3>
+            <p>Your active card slots are full. Choose a card to move to your scoring pile:</p>
+            <div class="replacement-options">
+                ${player.activeCards.map((card, slotIndex) => `
+                    <div class="replacement-card" onclick="selectReplacementCard(${slotIndex})" data-slot="${slotIndex}">
+                        <div class="replacement-card-name">${card.name}</div>
+                        <div class="replacement-card-points">${card.points} pts</div>
+                    </div>
+                `).join('')}
+            </div>
+            <p><strong>New card:</strong> ${newCard.name} (${newCard.points} pts)</p>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="confirmReplacement(${cardIndex})" id="confirm-replacement-btn" disabled>
+                    Confirm Replacement
+                </button>
+                <button onclick="cancelReplacement()" style="margin-left: 10px;">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Store the data for later use
+    window.pendingPayment = payment;
+    window.pendingNewCard = newCard;
+    window.pendingCardIndex = cardIndex;
+    window.selectedReplacementSlot = -1;
+    
+    document.body.appendChild(modal);
+}
+
+function selectReplacementCard(slotIndex) {
+    // Remove previous selection
+    document.querySelectorAll('.replacement-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Select new card
+    const selectedCard = document.querySelector(`[data-slot="${slotIndex}"]`);
+    selectedCard.classList.add('selected');
+    
+    // Enable confirm button
+    document.getElementById('confirm-replacement-btn').disabled = false;
+    window.selectedReplacementSlot = slotIndex;
+}
+
+function confirmReplacement(cardIndex) {
+    const player = getCurrentPlayer();
+    const slotIndex = window.selectedReplacementSlot;
+    const newCard = window.pendingNewCard;
+    
+    if (slotIndex === -1) return;
+    
+    // Move the old card to scoring pile
+    const oldCard = player.activeCards[slotIndex];
+    player.scoringPile.push(oldCard);
+    
+    // Place new card in the slot
+    player.activeCards[slotIndex] = newCard;
+    
+    logGameEvent('player', `${player.name} bought ${newCard.name}, moved ${oldCard.name} to scoring pile!`);
+    
+    // Remove card from available cards and add new one
+    gameState.availableCards.splice(cardIndex, 1);
+    addNewCardToMarket();
+    
+    // Close modal
+    closeReplacementModal();
+    
+    updateUI();
+    updateCardUI();
+}
+
+function cancelReplacement() {
+    // Refund the gems (they were already deducted)
+    const player = getCurrentPlayer();
+    const payment = window.pendingPayment;
+    
+    player.gems.red += payment.red;
+    player.gems.blue += payment.blue;
+    player.gems.green += payment.green;
+    player.gems.purple += payment.purple;
+    
+    closeReplacementModal();
+    updateUI();
+}
+
+function closeReplacementModal() {
+    const modal = document.querySelector('.replacement-modal');
+    if (modal) {
+        modal.remove();
+    }
+    window.pendingPayment = null;
+    window.selectedReplacementSlot = -1;
+}
+
+function addNewCardToMarket() {
+    const remainingCards = cardDeck.filter(c => 
+        !gameState.availableCards.some(ac => ac.id === c.id) &&
+        !gameState.players.some(p => 
+            p.activeCards.some(pc => pc && pc.id === c.id) ||
+            p.scoringPile.some(pc => pc.id === c.id)
+        )
+    );
+    
+    if (remainingCards.length > 0) {
+        const newCard = remainingCards[Math.floor(Math.random() * remainingCards.length)];
+        gameState.availableCards.push(newCard);
+    }
 }
 
 // Expose functions to the global scope for HTML interaction
@@ -1360,124 +1102,15 @@ window.rollDice = rollDice;
 window.endTurn = endTurn;
 window.toggleDiceSelection = toggleDiceSelection;
 window.logGameEvent = logGameEvent;
-
-function updatePurchasedCardsDisplay() {
-    // For each player
-    for (let i = 0; i < 2; i++) {
-        const player = gameState.players[i];
-        const container = document.getElementById(`player${i+1}-purchased-cards`);
-        
-        if (!container) {
-            console.error(`Container for player ${i+1} cards not found`);
-            continue;
-        }
-        
-        // Clear the container
-        container.innerHTML = '';
-        
-        // Add thumbnails for each regular purchased card
-        if (player.purchasedCards && player.purchasedCards.length > 0) {
-            player.purchasedCards.forEach((card, idx) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.classList.add('card-thumbnail', `card-${card.type}`);
-                
-                // Points badge inside the thumbnail
-                const pointsBadge = document.createElement('div');
-                pointsBadge.classList.add('points-badge');
-                pointsBadge.textContent = card.points;
-                thumbnail.appendChild(pointsBadge);
-                
-                // Create preview container as a separate element
-                const previewContainer = document.createElement('div');
-                previewContainer.classList.add('card-preview-container');
-                
-                // Create the full card preview
-                const preview = document.createElement('div');
-                preview.classList.add('card-preview', `card-${card.type}`);
-                
-                // Card content
-                preview.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-points">${card.points}</div>
-                        <h4 class="card-name">${card.name || 'Mystery Card'}</h4>
-                    </div>
-                    <div class="card-cost">
-                        ${renderCardCost(card.cost)}
-                    </div>
-                    <div class="card-type">${card.type}</div>
-                `;
-                
-                // Add preview to container, container to thumbnail
-                previewContainer.appendChild(preview);
-                thumbnail.appendChild(previewContainer);
-                
-                // Add finished thumbnail to player's cards container
-                container.appendChild(thumbnail);
-            });
-        }
-        
-        // Add thumbnails for each bonus card
-        if (player.bonusCards && player.bonusCards.length > 0) {
-            player.bonusCards.forEach((card, idx) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.classList.add('card-thumbnail', 'bonus-card-thumbnail');
-                
-                // Points badge
-                const pointsBadge = document.createElement('div');
-                pointsBadge.classList.add('points-badge');
-                pointsBadge.textContent = card.points;
-                thumbnail.appendChild(pointsBadge);
-                
-                // Bonus indicator
-                const bonusIndicator = document.createElement('div');
-                bonusIndicator.classList.add('bonus-indicator');
-                bonusIndicator.textContent = 'B';
-                bonusIndicator.style.position = 'absolute';
-                bonusIndicator.style.top = '2px';
-                bonusIndicator.style.left = '2px';
-                bonusIndicator.style.fontSize = '10px';
-                bonusIndicator.style.color = '#569cd6';
-                bonusIndicator.style.fontWeight = 'bold';
-                thumbnail.appendChild(bonusIndicator);
-                
-                // Create preview container
-                const previewContainer = document.createElement('div');
-                previewContainer.classList.add('card-preview-container');
-                
-                // Create the preview
-                const preview = document.createElement('div');
-                preview.classList.add('card-preview', 'bonus-card');
-                
-                // Preview content
-                preview.innerHTML = `
-                    <div class="card-header">
-                        <div class="card-points">${card.points}</div>
-                        <h4 class="card-name">${card.name}</h4>
-                    </div>
-                    <div class="card-description">${card.description}</div>
-                    <div class="card-cost">
-                        ${renderCardCost(card.cost)}
-                    </div>
-                    <div class="card-type">Bonus</div>
-                `;
-                
-                // Add to DOM
-                previewContainer.appendChild(preview);
-                thumbnail.appendChild(previewContainer);
-                container.appendChild(thumbnail);
-            });
-        }
-        
-        // If no cards at all, show empty message
-        if ((!player.purchasedCards || player.purchasedCards.length === 0) && 
-            (!player.bonusCards || player.bonusCards.length === 0)) {
-            const emptyMessage = document.createElement('div');
-            emptyMessage.classList.add('empty-cards-message');
-            emptyMessage.textContent = 'No cards yet';
-            container.appendChild(emptyMessage);
-        }
-    }
-}
+window.buyCard = buyCard;
+window.processPaymentForCard = processPaymentForCard;
+window.closePaymentModal = closePaymentModal;
+window.showScoringPile = showScoringPile;
+window.closeScoringModal = closeScoringModal;
+window.selectReplacementCard = selectReplacementCard;
+window.confirmReplacement = confirmReplacement;
+window.cancelReplacement = cancelReplacement;
+window.viewCard = viewCard;
 
 // Add this new function
 function createQuestionDice() {
@@ -1499,17 +1132,123 @@ function createQuestionDice() {
     gameState.diceValues = [];
 }
 
-// Add this function to remove duplicate UI elements
-function cleanupRedundantElements() {
-    // Remove duplicate sixes counters
-    const sixesCounters = document.querySelectorAll('.sixes-count');
-    sixesCounters.forEach(element => {
-        element.style.display = 'none';
+// Update player boards
+function updatePlayerBoards() {
+    gameState.players.forEach((player, playerIndex) => {
+        // Update active cards in slots
+        for (let slotIndex = 0; slotIndex < 3; slotIndex++) {
+            const slot = document.querySelector(`[data-player="${playerIndex}"][data-slot="${slotIndex}"]`);
+            const card = player.activeCards[slotIndex];
+            
+            if (card) {
+                slot.innerHTML = createSlotCardHTML(card);
+                slot.classList.add('filled');
+                slot.classList.remove('empty');
+            } else {
+                slot.innerHTML = '<span class="slot-placeholder">Empty</span>';
+                slot.classList.remove('filled');
+                slot.classList.add('empty');
+            }
+        }
+        
+        // Update scoring pile count
+        const scoringCountElement = document.getElementById(`player${playerIndex + 1}-scoring-count`);
+        const scoringPileElement = document.getElementById(`player${playerIndex + 1}-scoring-pile`);
+        
+        if (scoringCountElement) {
+            scoringCountElement.textContent = player.scoringPile.length;
+        }
+        
+        if (scoringPileElement) {
+            if (player.scoringPile.length > 0) {
+                scoringPileElement.classList.add('has-cards');
+                scoringPileElement.textContent = `${player.scoringPile.length} card${player.scoringPile.length > 1 ? 's' : ''}`;
+            } else {
+                scoringPileElement.classList.remove('has-cards');
+                scoringPileElement.textContent = 'Click to view';
+            }
+        }
+        
+        // Update total points (only from scoring pile)
+        const totalPoints = player.scoringPile.reduce((sum, card) => sum + card.points, 0);
+        player.points = totalPoints;
     });
+}
+
+function createSlotCardHTML(card) {
+    return `
+        <div class="slot-card" onclick="viewCard(${card.id})">
+            <div class="slot-card-name">${card.name}</div>
+            <div class="slot-card-cost">${formatSlotCardCost(card.cost)}</div>
+            <div class="slot-card-points">${card.points}</div>
+        </div>
+    `;
+}
+
+function formatSlotCardCost(cost) {
+    const gems = [];
     
-    // Remove duplicate victory points displays
-    const victoryPointsDisplays = document.querySelectorAll('.victory-points');
-    victoryPointsDisplays.forEach(element => {
-        element.style.display = 'none';
-    });
+    if (cost.red > 0) gems.push(`<span class="slot-cost-gem red">${cost.red}</span>`);
+    if (cost.blue > 0) gems.push(`<span class="slot-cost-gem blue">${cost.blue}</span>`);
+    if (cost.green > 0) gems.push(`<span class="slot-cost-gem green">${cost.green}</span>`);
+    if (cost.purple > 0) gems.push(`<span class="slot-cost-gem purple">${cost.purple}</span>`);
+    if (cost.wild > 0) gems.push(`<span class="slot-cost-gem wild">${cost.wild}</span>`);
+    
+    return gems.join('');
+}
+
+function viewCard(cardId) {
+    // Find the card in any player's active cards or scoring pile
+    const card = cardDeck.find(c => c.id === cardId);
+    if (card) {
+        alert(`${card.name}\nCost: ${formatCardCostText(card.cost)}\nPoints: ${card.points}`);
+    }
+}
+
+function formatCardCostText(cost) {
+    const parts = [];
+    if (cost.red > 0) parts.push(`${cost.red} red`);
+    if (cost.blue > 0) parts.push(`${cost.blue} blue`);
+    if (cost.green > 0) parts.push(`${cost.green} green`);
+    if (cost.purple > 0) parts.push(`${cost.purple} purple`);
+    if (cost.wild > 0) parts.push(`${cost.wild} wild`);
+    return parts.join(', ');
+}
+
+function showScoringPile(playerIndex) {
+    const player = gameState.players[playerIndex];
+    
+    if (player.scoringPile.length === 0) {
+        alert(`${player.name} has no cards in their scoring pile yet.`);
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'scoring-modal';
+    
+    const totalPoints = player.scoringPile.reduce((sum, card) => sum + card.points, 0);
+    
+    modal.innerHTML = `
+        <div class="scoring-modal-content">
+            <h3>${player.name}'s Scoring Pile (${totalPoints} points)</h3>
+            <div class="scoring-cards-grid">
+                ${player.scoringPile.map(card => `
+                    <div class="scoring-card">
+                        <div class="scoring-card-name">${card.name}</div>
+                        <div class="scoring-card-points">${card.points} pts</div>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="modal-close-btn" onclick="closeScoringModal()">Close</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function closeScoringModal() {
+    const modal = document.querySelector('.scoring-modal');
+    if (modal) {
+        modal.remove();
+    }
 }

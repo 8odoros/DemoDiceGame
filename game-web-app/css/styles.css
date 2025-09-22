@@ -576,33 +576,239 @@ button.disabled {
     100% { background-position: 0% 50%; }
 }
 
-/* Add this after the players-container div in index.html */
-.cards-container {
-    margin-top: 20px;
+/* ============================
+   CARD SYSTEM STYLES
+   ============================ */
+.cards-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
 }
 
-.card-section-title {
-    color: #61afef; /* Light blue for headings - like function names */
-    margin-bottom: 10px;
+.cards-section h3 {
+    color: #c586c0;
+    margin-bottom: 15px;
     text-align: center;
 }
 
-.card-display {
+.cards-container {
     display: flex;
+    gap: 15px;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 15px;
 }
 
-/* Add this inside each player-card */
-.victory-points {
-    color: #dcdcaa; /* Function yellow */
-    margin-top: 10px;
-    font-family: 'Consolas', monospace;
+.card {
+    background-color: #252526;
+    border: 1px solid #569cd6;
+    border-radius: 8px;
+    padding: 12px;
+    width: 200px;
+    min-height: 150px;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(86, 156, 214, 0.4);
+}
+
+.card.unaffordable {
+    opacity: 0.5;
+    border-color: #666;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.card-name {
+    color: #61afef;
+    font-size: 14px;
+    margin: 0;
+    flex: 1;
+}
+
+.card-points {
+    background-color: #e5c07b;
+    color: #1e1e1e;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.card-cost {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.cost-gem {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    min-width: 16px;
     text-align: center;
 }
 
-/* Card styles - IDE theme */
+.cost-gem.red {
+    background-color: #e06c75;
+    color: white;
+}
+
+.cost-gem.blue {
+    background-color: #61afef;
+    color: white;
+}
+
+.cost-gem.green {
+    background-color: #98c379;
+    color: white;
+}
+
+.cost-gem.purple {
+    background-color: #c586c0;
+    color: white;
+}
+
+.cost-gem.wild {
+    background-color: #e5c07b;
+    color: #1e1e1e;
+}
+
+.buy-card-btn {
+    width: 100%;
+    padding: 6px 12px;
+    background-color: #569cd6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.buy-card-btn:hover:not(:disabled) {
+    background-color: #4a8bc2;
+}
+
+.buy-card-btn:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+/* Points circle style */
+.points-circle {
+    background-color: #e5c07b;
+    color: #1e1e1e;
+}
+
+.points-circle .stat-value {
+    color: #1e1e1e;
+    font-weight: bold;
+}
+
+.points-circle .stat-label {
+    color: #1e1e1e;
+    font-weight: bold;
+}
+
+/* Payment Modal */
+.payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #252526;
+    border: 1px solid #569cd6;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h3 {
+    color: #c586c0;
+    margin-bottom: 15px;
+}
+
+.payment-section {
+    margin-top: 15px;
+}
+
+.gem-payment {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.gem-payment label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #d4d4d4;
+}
+
+.gem-payment input {
+    width: 60px;
+    padding: 4px;
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+    color: #d4d4d4;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-buttons button:first-child {
+    background-color: #569cd6;
+    color: white;
+}
+
+.modal-buttons button:last-child {
+    background-color: #666;
+    color: white;
+}
+
+/* ============================
+   CARD STYLES - IDE THEME
+   ============================ */
 .cards-container {
     margin: 20px 0;
     padding: 15px;
@@ -921,6 +1127,12 @@ button.disabled {
   color: #000;
 }
 
+.black-circle {
+  background: linear-gradient(145deg, #4a4a4a, #2a2a2a);
+  border: 2px solid #666;
+  color: #fff;
+}
+
 .stat-value {
   font-size: 18px;
   font-weight: bold;
@@ -1123,4 +1335,324 @@ button.disabled {
     display: block;
     text-align: center;
     margin-bottom: 4px;
+}
+
+/* ============================
+   PLAYER BOARD STYLES
+   ============================ */
+.player-board {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #1e1e1e;
+    border: 1px solid #3e3e42;
+    border-radius: 4px;
+}
+
+.player-board h4 {
+    color: #61afef;
+    margin-bottom: 8px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.card-slots {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+.card-slot {
+    width: 60px;
+    height: 80px;
+    border: 2px dashed #569cd6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #252526;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-slot:hover {
+    background-color: #2d2d30;
+    border-color: #61afef;
+}
+
+.card-slot.filled {
+    border: 2px solid #569cd6;
+    background-color: #2d2d30;
+}
+
+.slot-placeholder {
+    color: #666;
+    font-size: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.slot-card {
+    width: 100%;
+    height: 100%;
+    background-color: #252526;
+    border: 1px solid #569cd6;
+    border-radius: 4px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.slot-card:hover {
+    transform: scale(1.05);
+}
+
+.slot-card-name {
+    font-size: 8px;
+    color: #61afef;
+    font-weight: bold;
+    line-height: 1.1;
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.slot-card-points {
+    font-size: 10px;
+    color: #e5c07b;
+    font-weight: bold;
+    text-align: center;
+    background-color: #1e1e1e;
+    border-radius: 2px;
+    padding: 1px 2px;
+}
+
+.slot-card-cost {
+    display: flex;
+    gap: 1px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 2px 0;
+}
+
+.slot-cost-gem {
+    font-size: 7px;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-weight: bold;
+    min-width: 8px;
+    text-align: center;
+}
+
+.scoring-pile {
+    text-align: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #3e3e42;
+}
+
+.scoring-pile h5 {
+    color: #e5c07b;
+    font-size: 10px;
+    margin-bottom: 5px;
+}
+
+.pile-preview {
+    background-color: #252526;
+    border: 1px solid #e5c07b;
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 9px;
+    color: #d4d4d4;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.pile-preview:hover {
+    background-color: #2d2d30;
+}
+
+.pile-preview.has-cards {
+    border-color: #98c379;
+    color: #98c379;
+}
+
+/* Scoring Pile Modal */
+.scoring-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.scoring-modal-content {
+    background-color: #252526;
+    border: 1px solid #e5c07b;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.scoring-modal-content h3 {
+    color: #e5c07b;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.scoring-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.scoring-card {
+    background-color: #1e1e1e;
+    border: 1px solid #98c379;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+}
+
+.scoring-card-name {
+    color: #61afef;
+    font-size: 12px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.scoring-card-points {
+    color: #e5c07b;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #252526;
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+}
+
+.modal-close-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #666;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-close-btn:hover {
+    background-color: #777;
+}
+
+/* Replacement Modal */
+.replacement-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.replacement-modal-content {
+    background-color: #252526;
+    border: 1px solid #c586c0;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+}
+
+.replacement-modal-content h3 {
+    color: #c586c0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.replacement-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.replacement-card {
+    background-color: #1e1e1e;
+    border: 2px solid #569cd6;
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-width: 100px;
+}
+
+.replacement-card:hover {
+    border-color: #61afef;
+    background-color: #2d2d30;
+}
+
+.replacement-card.selected {
+    border-color: #e5c07b;
+    background-color: #2d2d30;
+}
+
+.replacement-card-name {
+    color: #61afef;
+    font-size: 12px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.replacement-card-points {
+    color: #e5c07b;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.replacement-modal button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0 5px;
+}
+
+.replacement-modal button:first-of-type {
+    background-color: #569cd6;
+    color: white;
+}
+
+.replacement-modal button:first-of-type:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+.replacement-modal button:last-of-type {
+    background-color: #666;
+    color: white;
+}
+
+.replacement-modal button:hover:not(:disabled) {
+    opacity: 0.8;
 }

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dice Gem Game</title>
+    <title>Simple Dice Gem Game</title>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
-        <h1>Dice Gem Game II</h1>
+        <h1>Simple Dice Gem Game</h1>
         
         <div class="game-info">
             <div class="round-counter">Round: <span id="round-counter">1</span></div> <!-- Start from round 1 -->
@@ -19,13 +19,13 @@
             <div id="player1" class="player-card active">
                 <h2 class="player-name">Alice's treasure</h2>
                 <div class="player-stats">
-                    <div class="stat-circle gold-circle">
-                        <span class="stat-value" id="player1-vp">0</span>
-                        <span class="stat-label">VP</span>
+                    <div class="stat-circle black-circle">
+                        <span class="stat-value" id="player1-black-cubes">0</span>
+                        <span class="stat-label">BC</span>
                     </div>
-                    <div class="stat-circle silver-circle">
-                        <span class="stat-value" id="player1-sixes">0</span>
-                        <span class="stat-icon">⚅</span>
+                    <div class="stat-circle points-circle">
+                        <span class="stat-value" id="player1-points">0</span>
+                        <span class="stat-label">PTS</span>
                     </div>
                 </div>
                 <div class="gems-container">
@@ -38,22 +38,38 @@
                         <div class="gem purple-gem"><span id="player1-purple-gems">0</span></div>
                     </div>
                 </div>
-                <div class="purchased-cards-container">
-                    <h4 class="purchased-cards-title">Cards Collection</h4>
-                    <div class="purchased-cards" id="player1-purchased-cards"></div>
+                <div class="player-board">
+                    <h4>Active Cards</h4>
+                    <div class="card-slots">
+                        <div class="card-slot" data-player="0" data-slot="0">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                        <div class="card-slot" data-player="0" data-slot="1">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                        <div class="card-slot" data-player="0" data-slot="2">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                    </div>
+                    <div class="scoring-pile">
+                        <h5>Scoring Pile (<span id="player1-scoring-count">0</span>)</h5>
+                        <div class="pile-preview" id="player1-scoring-pile" onclick="showScoringPile(0)">
+                            Click to view
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div id="player2" class="player-card">
                 <h2 class="player-name">Bob's treasure</h2>
                 <div class="player-stats">
-                    <div class="stat-circle gold-circle">
-                        <span class="stat-value" id="player2-vp">0</span>
-                        <span class="stat-label">VP</span>
+                    <div class="stat-circle black-circle">
+                        <span class="stat-value" id="player2-black-cubes">0</span>
+                        <span class="stat-label">BC</span>
                     </div>
-                    <div class="stat-circle silver-circle">
-                        <span class="stat-value" id="player2-sixes">0</span>
-                        <span class="stat-icon">⚅</span>
+                    <div class="stat-circle points-circle">
+                        <span class="stat-value" id="player2-points">0</span>
+                        <span class="stat-label">PTS</span>
                     </div>
                 </div>
                 <div class="gems-container">
@@ -66,22 +82,26 @@
                         <div class="gem purple-gem"><span id="player2-purple-gems">0</span></div>
                     </div>
                 </div>
-                <div class="purchased-cards-container">
-                    <h4 class="purchased-cards-title">Cards Collection</h4>
-                    <div class="purchased-cards" id="player2-purchased-cards"></div>
+                <div class="player-board">
+                    <h4>Active Cards</h4>
+                    <div class="card-slots">
+                        <div class="card-slot" data-player="1" data-slot="0">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                        <div class="card-slot" data-player="1" data-slot="1">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                        <div class="card-slot" data-player="1" data-slot="2">
+                            <span class="slot-placeholder">Empty</span>
+                        </div>
+                    </div>
+                    <div class="scoring-pile">
+                        <h5>Scoring Pile (<span id="player2-scoring-count">0</span>)</h5>
+                        <div class="pile-preview" id="player2-scoring-pile" onclick="showScoringPile(1)">
+                            Click to view
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="cards-container">
-            <h3 class="card-section-title">Cards Market</h3>
-            <div class="card-display">
-                <!-- VP cards will be added here dynamically -->
-            </div>
-            
-            <h3 class="card-section-title">Bonus Cards</h3>
-            <div class="bonus-card-display">
-                <!-- Bonus cards will be added here dynamically -->
             </div>
         </div>
 
@@ -92,6 +112,13 @@
         
         <div class="dice-container hidden">
             <!-- Dice will be added dynamically by JavaScript -->
+        </div>
+        
+        <div class="cards-section">
+            <h3>Available Cards</h3>
+            <div id="available-cards" class="cards-container">
+                <!-- Cards will be added dynamically by JavaScript -->
+            </div>
         </div>
         
         <div class="controls">
@@ -108,7 +135,9 @@
         </div>
         
         <div class="instructions">
-            <p>Click on dice to select them for re-rolling. You get up to 4 rolls per turn.</p> <!-- Update the instructions -->
+            <p>Click on dice to select them for re-rolling. You get up to 4 rolls per turn.</p>
+            <p><strong>Scoring:</strong> 1s→red gems | 2s→blue gems (pairs) | 3s→green gems (triplets) | 4s→purple gems (quartets) or black cubes | 5s→blue gem (any) | 6s→progressive rewards</p>
+            <p><strong>Cards:</strong> Purchase cards with gems. Each player has 3 active card slots. When slots are full, new cards replace old ones, which go to your scoring pile. Only cards in your scoring pile count for final points!</p>
         </div>
     </div>
     
