@@ -1656,3 +1656,74 @@ button.disabled {
 .replacement-modal button:hover:not(:disabled) {
     opacity: 0.8;
 }
+
+/* ============================
+   SHOPPING PHASE STYLES
+   ============================ */
+.shopping-controls {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #2d2d30;
+    border: 2px solid #e5c07b;
+    border-radius: 8px;
+    text-align: center;
+    display: none;
+}
+
+.shopping-phase-info h3 {
+    color: #e5c07b;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.shopping-phase-info p {
+    color: #d4d4d4;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.shopping-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.shopping-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#skip-shopping-btn {
+    background-color: #666;
+    color: white;
+}
+
+#skip-shopping-btn:hover {
+    background-color: #777;
+}
+
+#done-shopping-btn {
+    background-color: #98c379;
+    color: white;
+}
+
+#done-shopping-btn:hover {
+    background-color: #89b369;
+}
+
+/* Card modifications during different phases */
+.card.phase-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.card.phase-disabled .buy-card-btn {
+    background-color: #444;
+    color: #888;
+    cursor: not-allowed;
+}

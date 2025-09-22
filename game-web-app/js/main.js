@@ -40,7 +40,9 @@ let gameState = {
     maxRolls: 4,
     numDice: 8,
     roundCount: 1,
-    availableCards: []
+    availableCards: [],
+    phase: 'playing', // 'playing' or 'shopping'
+    shoppingPlayerIndex: 0
 };
 
 let gameRunning = false;
@@ -431,44 +433,8 @@ function endTurn() {
     gameState.rollCount = 0;
     gameState.selectedDice = [];
     
-    // Update UI elements - enable roll button for next player
-    document.getElementById('roll-btn').disabled = false;
-    document.getElementById('roll-btn').style.display = 'inline-block';
-    document.getElementById('roll-btn').classList.remove('disabled');
-    updateRollButtonText(); // Reset button text for next player
-    
-    // Disable end turn button until next roll
-    document.getElementById('end-turn-btn').disabled = true;
-    
-    // Clear max-rolls-reached class if it exists
-    document.getElementById('roll-count').classList.remove('max-rolls-reached');
-    
-    // Switch to next player
-    switchPlayer();
-    
-    // Set dice alignment for the NEXT player (after switchPlayer has been called)
-    const diceContainer = document.querySelector('.dice-container');
-    if (gameState.currentPlayerIndex === 0) {
-        // Alice is next player - align dice to the left
-        diceContainer.classList.remove('align-right');
-        diceContainer.classList.add('align-left');
-    } else {
-        // Bob is next player - align dice to the right
-        diceContainer.classList.remove('align-left');
-        diceContainer.classList.add('align-right');
-    }
-    
-    // Add question mark dice for the new player's turn
-    createQuestionDice();
-    
-    updateUI();
-}
-
-function endRound() {
-    // Increment round count after both players have played
-    gameState.roundCount++;
-    logGameEvent('system', `Round ${gameState.roundCount} begins.`);
-    updateUI();
+    // Start individual shopping phase for current player
+    startIndividualShopping();
 }
 
 // Keep track of previous values for animation
@@ -543,46 +509,36 @@ function updatePlayerGems() {
     });
 }
 
-// 1. First, remove the alignment code from updateActivePlayer function
 function updateActivePlayer() {
     // Update active player highlighting
     const player1Card = document.getElementById('player1');
     const player2Card = document.getElementById('player2');
     
-    if (gameState.currentPlayerIndex === 0) {
-        // Alice is playing
-        player1Card.classList.add('active');
-        player2Card.classList.remove('active');
-        document.getElementById('current-player').textContent = `${gameState.players[0].name}'s Turn`;
-        
-        // REMOVED: Dice alignment code - will be handled in rollDice function
+    if (gameState.phase === 'shopping') {
+        // Highlight the current player (who is shopping)
+        if (gameState.currentPlayerIndex === 0) {
+            player1Card.classList.add('active');
+            player2Card.classList.remove('active');
+            document.getElementById('current-player').textContent = `${gameState.players[0].name}'s Shopping Turn`;
+        } else {
+            player1Card.classList.remove('active');
+            player2Card.classList.add('active');
+            document.getElementById('current-player').textContent = `${gameState.players[1].name}'s Shopping Turn`;
+        }
     } else {
-        // Bob is playing
-        player1Card.classList.remove('active');
-        player2Card.classList.add('active');
-        document.getElementById('current-player').textContent = `${gameState.players[1].name}'s Turn`;
-        
-        // REMOVED: Dice alignment code - will be handled in rollDice function
+        // Regular game phase
+        if (gameState.currentPlayerIndex === 0) {
+            // Alice is playing
+            player1Card.classList.add('active');
+            player2Card.classList.remove('active');
+            document.getElementById('current-player').textContent = `${gameState.players[0].name}'s Turn`;
+        } else {
+            // Bob is playing
+            player1Card.classList.remove('active');
+            player2Card.classList.add('active');
+            document.getElementById('current-player').textContent = `${gameState.players[1].name}'s Turn`;
+        }
     }
-}
-
-function switchPlayer() {
-    // If Bob (index 1) just finished, end the round
-    if (gameState.currentPlayerIndex === 1) {
-        endRound();
-        
-        // Log that we're returning to Alice for a new round
-        logGameEvent('system', `Starting round ${gameState.roundCount} with ${gameState.players[0].name}'s turn.`);
-    } else {
-        // Just switching from Alice to Bob within the same round
-        logGameEvent('system', `${gameState.players[1].name}'s turn.`);
-    }
-    
-    // Switch to next player
-    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    
-    // Make sure roll button text is updated
-    updateRollButtonText();
 }
 
 function resetTurn() {
@@ -624,7 +580,9 @@ async function startGame() {
         maxRolls: 4,
         numDice: 8,
         roundCount: 1,
-        availableCards: []
+        availableCards: [],
+        phase: 'playing',
+        shoppingPlayerIndex: 0
     };
     
     // Initialize card deck
@@ -823,9 +781,25 @@ function createCardElement(card, index) {
     cardDiv.className = 'card';
     cardDiv.dataset.cardId = card.id;
     
-    const canAfford = canPlayerAffordCard(getCurrentPlayer(), card);
-    if (!canAfford) {
+    let canAfford = false;
+    let buttonText = 'Buy';
+    let isDisabled = false;
+    
+    if (gameState.phase === 'playing') {
+        // During playing phase, cards cannot be purchased
+        buttonText = 'Finish Turn First';
+        isDisabled = true;
         cardDiv.classList.add('unaffordable');
+    } else if (gameState.phase === 'shopping') {
+        // During shopping phase, current player can buy
+        const currentPlayer = getCurrentPlayer();
+        canAfford = canPlayerAffordCard(currentPlayer, card);
+        
+        if (!canAfford) {
+            cardDiv.classList.add('unaffordable');
+            buttonText = 'Can\'t Afford';
+            isDisabled = true;
+        }
     }
     
     cardDiv.innerHTML = `
@@ -836,9 +810,9 @@ function createCardElement(card, index) {
         <div class="card-cost">
             ${formatCardCost(card.cost)}
         </div>
-        <button class="buy-card-btn" ${!canAfford ? 'disabled' : ''} 
+        <button class="buy-card-btn" ${isDisabled ? 'disabled' : ''} 
                 onclick="buyCard(${index})">
-            ${canAfford ? 'Buy' : 'Can\'t Afford'}
+            ${buttonText}
         </button>
     `;
     
@@ -876,7 +850,7 @@ function canPlayerAffordCard(player, card) {
 
 function buyCard(cardIndex) {
     const card = gameState.availableCards[cardIndex];
-    const player = getCurrentPlayer();
+    const player = getCurrentPlayer(); // Always use current player now
     
     if (!canPlayerAffordCard(player, card)) {
         logGameEvent('system', `${player.name} cannot afford ${card.name}`);
@@ -892,6 +866,8 @@ function buyCard(cardIndex) {
 }
 
 function showPaymentModal(card, cardIndex) {
+    const currentPlayer = getCurrentPlayer(); // Always use current player now
+    
     const modal = document.createElement('div');
     modal.className = 'payment-modal';
     modal.innerHTML = `
@@ -901,10 +877,10 @@ function showPaymentModal(card, cardIndex) {
             <div class="payment-section">
                 <h4>Pay with your gems:</h4>
                 <div class="gem-payment">
-                    <label>Red: <input type="number" id="pay-red" min="0" max="${getCurrentPlayer().gems.red}" value="0"></label>
-                    <label>Blue: <input type="number" id="pay-blue" min="0" max="${getCurrentPlayer().gems.blue}" value="0"></label>
-                    <label>Green: <input type="number" id="pay-green" min="0" max="${getCurrentPlayer().gems.green}" value="0"></label>
-                    <label>Purple: <input type="number" id="pay-purple" min="0" max="${getCurrentPlayer().gems.purple}" value="0"></label>
+                    <label>Red: <input type="number" id="pay-red" min="0" max="${currentPlayer.gems.red}" value="0"></label>
+                    <label>Blue: <input type="number" id="pay-blue" min="0" max="${currentPlayer.gems.blue}" value="0"></label>
+                    <label>Green: <input type="number" id="pay-green" min="0" max="${currentPlayer.gems.green}" value="0"></label>
+                    <label>Purple: <input type="number" id="pay-purple" min="0" max="${currentPlayer.gems.purple}" value="0"></label>
                 </div>
                 <div class="modal-buttons">
                     <button onclick="processPaymentForCard(${card.id}, ${cardIndex})">Confirm Purchase</button>
@@ -950,7 +926,7 @@ function closePaymentModal() {
 }
 
 function completeCardPurchase(card, cardIndex, payment) {
-    const player = getCurrentPlayer();
+    const player = getCurrentPlayer(); // Always use current player now
     
     // Deduct gems
     player.gems.red -= payment.red;
@@ -1111,6 +1087,7 @@ window.selectReplacementCard = selectReplacementCard;
 window.confirmReplacement = confirmReplacement;
 window.cancelReplacement = cancelReplacement;
 window.viewCard = viewCard;
+window.finishIndividualShopping = finishIndividualShopping;
 
 // Add this new function
 function createQuestionDice() {
@@ -1251,4 +1228,125 @@ function closeScoringModal() {
     if (modal) {
         modal.remove();
     }
+}
+
+// ============================
+// SHOPPING PHASE FUNCTIONS
+// ============================
+
+function startIndividualShopping() {
+    gameState.phase = 'shopping';
+    gameState.shoppingPlayerIndex = gameState.currentPlayerIndex;
+    
+    logGameEvent('system', `${getCurrentPlayer().name} can now purchase cards with their gems!`);
+    
+    // Hide dice and game controls
+    document.querySelector('.dice-container').classList.add('hidden');
+    document.getElementById('roll-btn').style.display = 'none';
+    document.getElementById('end-turn-btn').style.display = 'none';
+    
+    // Show shopping controls
+    showIndividualShoppingControls();
+    updateUI();
+}
+
+function showIndividualShoppingControls() {
+    // Create shopping controls if they don't exist
+    let shoppingControls = document.getElementById('shopping-controls');
+    if (!shoppingControls) {
+        shoppingControls = document.createElement('div');
+        shoppingControls.id = 'shopping-controls';
+        shoppingControls.className = 'shopping-controls';
+        
+        // Insert after the cards section
+        const cardsSection = document.querySelector('.cards-section');
+        cardsSection.parentNode.insertBefore(shoppingControls, cardsSection.nextSibling);
+    }
+    
+    const currentPlayer = getCurrentPlayer();
+    
+    shoppingControls.innerHTML = `
+        <div class="shopping-phase-info">
+            <h3>${currentPlayer.name}'s Shopping Turn</h3>
+            <p>Purchase cards with your gems, or finish shopping to continue.</p>
+            <div class="shopping-buttons">
+                <button id="finish-individual-shopping-btn" onclick="finishIndividualShopping()">Finish Shopping</button>
+            </div>
+        </div>
+    `;
+    
+    shoppingControls.style.display = 'block';
+}
+
+function finishIndividualShopping() {
+    gameState.phase = 'playing';
+    
+    // Hide shopping controls
+    const shoppingControls = document.getElementById('shopping-controls');
+    if (shoppingControls) {
+        shoppingControls.style.display = 'none';
+    }
+    
+    // Check if this was the last player of the round
+    if (gameState.currentPlayerIndex === 1) {
+        // Bob just finished, start new round
+        startNewRound();
+    } else {
+        // Switch to next player
+        switchToNextPlayer();
+    }
+}
+
+function switchToNextPlayer() {
+    // Switch to next player
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    
+    logGameEvent('system', `${getCurrentPlayer().name}'s turn.`);
+    
+    // Show dice and game controls for next player
+    document.querySelector('.dice-container').classList.remove('hidden');
+    document.getElementById('roll-btn').style.display = 'inline-block';
+    document.getElementById('roll-btn').disabled = false;
+    document.getElementById('roll-btn').classList.remove('disabled');
+    updateRollButtonText();
+    
+    // Set dice alignment for the new player
+    const diceContainer = document.querySelector('.dice-container');
+    if (gameState.currentPlayerIndex === 0) {
+        // Alice's turn - align dice to the left
+        diceContainer.classList.remove('align-right');
+        diceContainer.classList.add('align-left');
+    } else {
+        // Bob's turn - align dice to the right
+        diceContainer.classList.remove('align-left');
+        diceContainer.classList.add('align-right');
+    }
+    
+    // Add question mark dice for the new player's turn
+    createQuestionDice();
+    
+    updateUI();
+}
+
+function startNewRound() {
+    // Increment round count
+    gameState.roundCount++;
+    gameState.currentPlayerIndex = 0; // Reset to first player
+    
+    logGameEvent('system', `Round ${gameState.roundCount} begins with ${gameState.players[0].name}'s turn.`);
+    
+    // Show dice and game controls
+    document.querySelector('.dice-container').classList.remove('hidden');
+    document.getElementById('roll-btn').style.display = 'inline-block';
+    document.getElementById('roll-btn').disabled = false;
+    
+    // Set initial dice alignment for Alice (player 0)
+    const diceContainer = document.querySelector('.dice-container');
+    diceContainer.classList.remove('align-right');
+    diceContainer.classList.add('align-left');
+    
+    // Add question mark dice for the new round
+    createQuestionDice();
+    
+    updateUI();
 }
